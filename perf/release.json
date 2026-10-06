@@ -1,0 +1,24 @@
+{
+  "version": "0.3.0",
+  "build": "8",
+  "filename": "MenuSearch-0.3.0-arm64.zip",
+  "sha256": "a50a00eab1170f63dc25078bd6f8990b3e63158f44e17d419f4dcf64ac993e14",
+  "bytes": 1653518,
+  "download_url": "https://github.com/zengtianli/MenuSearch/releases/download/v0.3.0/MenuSearch-0.3.0-arm64.zip",
+  "notarized": true,
+  "notarization_id": "d835d1e6-424c-43ae-91b2-50fc7c3489c7",
+  "minimum_macos": "14.0",
+  "architecture": "arm64",
+  "signing": "Developer ID Application with hardened runtime",
+  "dmg": {
+    "filename": "MenuSearch-0.3.0-arm64.dmg",
+    "sha256": "d83e67306acf76ae3b366aa453045c6e0ba496516dc22323b2f5c98535ad4777",
+    "bytes": 2033966,
+    "download_url": "https://github.com/zengtianli/MenuSearch/releases/download/v0.3.0/MenuSearch-0.3.0-arm64.dmg",
+    "notarization_id": "e69d84ae-d0bf-4cdf-9ebc-2c7f6cd14151"
+  },
+  "source_commit": "918534716bb2ad2fcfb273c9eddad34c13f9188a",
+  "source_sha256": "6806a27bae3b9ad44120298435359177a44ea807346868750382a6d77c62e549",
+  "executable_sha256": "ff699e95d8c6253c9c9b543c83e47573e9a8bf82dd09c725742a1ba1535ddf89",
+  "packaged_at": "2026-10-06T17:27:25+00:00"
+}
