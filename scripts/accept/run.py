@@ -134,7 +134,8 @@ def functionality(cache, exe, box):
     _, restored = box.json("config", "get")
     checks["config_import_restores"] = changed.get("hotkey") is None and imported.returncode == 0 and restored == got
     path = box.run("config", "path")
-    checks["config_path"] = path.stdout.strip() == str(box.support / "settings.json")
+    # Compared as resolved paths: under /private/tmp the application reports the same file as /tmp/….
+    checks["config_path"] = path.returncode == 0 and Path(path.stdout.strip()).resolve() == (box.support / "settings.json").resolve()
     report = self_test(cache)
     checks.update(named(report, [
         "empty_lists_all", "header_names_target", "distinct_duplicate_paths", "fuzzy_multi_token", "path_search", "chinese",
