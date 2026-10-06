@@ -115,13 +115,13 @@ mkdir -p ~/.local/bin && ln -s /Applications/MenuSearch.app/Contents/MacOS/MenuS
 <!-- lightweight:start -->
 ## 资源占用
 
-| 安装后占用 | 空闲内存 | 空闲 CPU | 冷启动到首屏就绪 |
+| 安装包 | 空闲内存 | 空闲 CPU | 冷启动到首屏就绪 |
 |---|---|---|---|
-| **2.1 MB** | **17.8 MB** | **0%** | **422 ms** |
+| **2.0 MB**（装好后 2.2 MB） | **17.8 MB** | **0%** | **635 ms** |
 
 原生 AppKit，无 WebView、无脚本运行时、无第三方库；快捷键是向系统注册的一个组合键，没有事件监听和轮询；菜单每次呼出现读、用完即弃，不建索引；外部呼出方式面板关闭后进程即结束。
 
-<sub>v0.2.0 (6) · Mac16,12 / Apple M4 / macOS 27.2 · 内置快捷键方式常驻、面板未显示时采样；按下快捷键到完整结果的耗时由 App 记录在 menusearch status 的 last_show。 · 2026-10-07。数字来自所列设备实测，版本更新后重新测量。内存口径为 phys_footprint；CPU 为 60 秒采样窗内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
+<sub>v0.3.0 (8) · Mac16,12 / Apple M4 / macOS 27.2 · 内置快捷键方式常驻、面板未显示时采样；按下快捷键到完整结果的耗时由 App 记录在 menusearch status 的 last_show。 · 2026-10-07。数字来自所列设备实测，版本更新后重新测量。内存口径为 phys_footprint；CPU 为 60 秒采样窗内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
 <!-- lightweight:end -->
 
 上面这组数字由实测文件自动写入。另外两项：在 1000 条命令里边打字边过滤，P95 约 14–33 ms（后台渲染，含列表重载与布局，随机器负载变化）；读取一个 App 的菜单，Finder 201 条约 40–76 ms、微信 92 条约 28–43 ms、Chrome 750 条约 149–206 ms、Safari 577 条约 307–536 ms（随它当时的状态变化）。外部呼出方式下面板关闭后没有本 App 的进程。「按下快捷键到面板出现完整结果」每次都记在 `menusearch status` 的 `last_show` 里。

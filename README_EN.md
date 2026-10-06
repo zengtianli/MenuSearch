@@ -115,11 +115,11 @@ The few values that follow macOS rather than this app (which top-level menus bel
 <!-- lightweight:start -->
 ## Resource use
 
-| Installed | Idle memory | Idle CPU | Speed |
+| Download | Idle memory | Idle CPU | Speed |
 |---|---|---|---|
-| **2.1 MB** | **17.8 MB** | **0%** | **422 ms** |
+| **2.0 MB** (installed 2.2 MB) | **17.8 MB** | **0%** | **635 ms** |
 
-<sub>v0.2.0 (6) · Mac16,12 / Apple M4 / macOS 27.2 · measured 2026-10-07. Measured on the listed device; re-measured for each version. Memory uses phys_footprint; CPU is CPU time ÷ wall time over a 60-second sampling window; sizes in decimal MB. Raw data: [perf/lightweight.json](perf/lightweight.json).</sub>
+<sub>v0.3.0 (8) · Mac16,12 / Apple M4 / macOS 27.2 · Sampled while resident in built-in shortcut mode with the panel closed; the time from key press to the complete list is recorded by the app in last_show of menusearch status. · measured 2026-10-07. Measured on the listed device; re-measured for each version. Memory uses phys_footprint; CPU is CPU time ÷ wall time over a 60-second sampling window; sizes in decimal MB. Raw data: [perf/lightweight.json](perf/lightweight.json).</sub>
 <!-- lightweight:end -->
 
 The numbers above are written from the measurement file. Two more: filtering while typing in 1000 commands has a P95 of about 14–33 ms (rendered in the background, including list reload and layout, varying with machine load); reading one app's menu takes about 40–76 ms for Finder (201 items), 28–43 ms for WeChat (92), 149–206 ms for Chrome (750) and 307–536 ms for Safari (577, depending on its state). In external mode no process of this app remains after the panel closes. The time from pressing the shortcut to the complete list is recorded for every summon in `last_show` of `menusearch status`.
