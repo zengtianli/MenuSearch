@@ -1,13 +1,16 @@
 {
   "product": "menusearch",
-  "version": "0.2.0 (6)",
+  "version": "0.3.0 (8)",
   "binary_sha256": "5d88862a1820079a2bf55f148acfda70f30c2eb5af2b8267260e0dca382b3ba5",
   "data": "内置快捷键方式常驻、面板未显示时采样；按下快捷键到完整结果的耗时由 App 记录在 menusearch status 的 last_show。",
   "measured_at": "2026-10-07",
   "device": "Mac16,12 / Apple M4 / macOS 27.2",
   "size": {
-    "installed_bytes": 2117632,
-    "installed_mb": 2.02
+    "download_bytes": 2033966,
+    "download_mb": 1.94,
+    "installed_bytes": 2158592,
+    "installed_mb": 2.06,
+    "download_file": "MenuSearch-0.3.0-arm64.dmg"
   },
   "unmeasured": [
     {
@@ -449,25 +452,123 @@
         "installed_bytes": 2117632,
         "installed_mb": 2.02
       }
+    },
+    {
+      "section": "version",
+      "replaced_on": "2026-10-07",
+      "reason": "装机：安装了轻量化后的新构建",
+      "value": "0.2.0 (6)"
+    },
+    {
+      "section": "idle",
+      "version": "0.2.0 (6)",
+      "replaced_on": "2026-10-07",
+      "reason": "版本变化；仅本次实测可作为当前证据",
+      "value": {
+        "process": "/Applications/MenuSearch.app",
+        "footprint_mb": 17.0,
+        "main_footprint_mb": 17.0,
+        "cpu_pct": 0.0,
+        "main_cpu_pct": 0.0,
+        "processes": [
+          {
+            "name": "main",
+            "cpu_pct": 0.0,
+            "footprint_peak_mb": 17.0
+          }
+        ],
+        "window_s": 60,
+        "settle_s": null,
+        "measured_at": "2026-10-07",
+        "method": "对原登记常驻实例直接采样； measure.py idle <PID> --seconds 60 --with-helpers：内存为主进程 + WebKit/XPC 辅助进程 + 子进程同一时刻 phys_footprint 之和的峰值（活动监视器「内存」列同口径），CPU 为这些进程窗口内 CPU 时间增量之和 ÷ 墙钟；采样时本人在用电脑（被测 App 未在前台被使用，否则丢弃重采）",
+        "load": "负载均值 5.12 5.58 7.24；total = 3072.00M  used = 2445.56M  free = 626.44M",
+        "owner_idle_s_at_start": 168
+      }
+    },
+    {
+      "section": "speed_gui",
+      "version": "0.2.0 (6)",
+      "replaced_on": "2026-10-07",
+      "reason": "版本变化；仅本次实测可作为当前证据",
+      "value": [
+        {
+          "key": "cold_launch_to_ready",
+          "label": "冷启动到首屏就绪",
+          "median_ms": 422.0,
+          "runs": 5,
+          "ready_signal": "os_log",
+          "headline": true,
+          "raw_ms": [
+            527.0,
+            321.0,
+            384.0,
+            422.0,
+            521.0
+          ],
+          "method": "sim_lane.run_mac_quiet：LSUIElement 隔离副本；open -g -j -n -> App os_log lane-ready（首屏数据与布局完成）；5 次中位数"
+        }
+      ]
+    },
+    {
+      "section": "runtime_measurement",
+      "version": "0.2.0 (6)",
+      "replaced_on": "2026-10-07",
+      "reason": "版本变化；仅本次实测可作为当前证据",
+      "value": {
+        "environment": "native",
+        "evidence": "/Users/tianli/Library/Caches/app-lightweight/measurement-candidates/b35ef661fab34c55a0b250a989c54728.raw.json",
+        "evidence_sha256": "96458f6dfeea6876b87058c03007a44c3dd1a9ba7ec979a372be21ece56081d7",
+        "input_sha256": "78b019bdc49bd88921679ac8138173d1af26dc8d25752892f0bd9286f5f29f8c",
+        "ready_signal": "os_log"
+      }
+    },
+    {
+      "section": "speed",
+      "version": "0.2.0 (6)",
+      "replaced_on": "2026-10-07",
+      "reason": "版本变化；仅本次实测可作为当前证据",
+      "value": {
+        "cold_launch_ms": 422.0,
+        "runs": 5,
+        "ready_signal": "os_log",
+        "raw_ms": [
+          527.0,
+          321.0,
+          384.0,
+          422.0,
+          521.0
+        ],
+        "method": "sim_lane.run_mac_quiet：LSUIElement 隔离副本；open -g -j -n -> App os_log lane-ready（首屏数据与布局完成）；5 次中位数"
+      }
+    },
+    {
+      "section": "size",
+      "version": "0.2.0 (6)",
+      "replaced_on": "2026-10-07",
+      "reason": "版本变化；旧安装包大小不沿用",
+      "value": {
+        "installed_bytes": 2117632,
+        "installed_mb": 2.02
+      }
     }
   ],
   "measured_artifact": {
-    "version": "0.2.0",
-    "build": "6",
-    "executable_sha256": "1099f4c145490179a722dc80cd48faf5db0f23a03c376952ce8ad843b530efdd"
+    "version": "0.3.0",
+    "build": "8",
+    "executable_sha256": "ff699e95d8c6253c9c9b543c83e47573e9a8bf82dd09c725742a1ba1535ddf89"
   },
-  "input_sha256": "78b019bdc49bd88921679ac8138173d1af26dc8d25752892f0bd9286f5f29f8c",
-  "env_note": "2026-10-07 主会话逐个顺序测量，负载均值 5.87 5.68 7.44；total = 3072.00M  used = 2445.56M  free = 626.44M（开始时）；启动时间受负载影响，内存与 CPU 为进程自身数值",
+  "input_sha256": "c38235ef09d2c824a84ef484b15845378ddba9b8beafd0eb159f1f9186cb47ab",
+  "env_note": "2026-10-07 主会话逐个顺序测量，负载均值 6.76 6.99 8.57；total = 4096.00M  used = 2774.88M  free = 1321.12M（开始时）；启动时间受负载影响，内存与 CPU 为进程自身数值",
   "speed": {
-    "cold_launch_ms": 422.0,
+    "cold_launch_ms": 635.0,
     "runs": 5,
     "ready_signal": "os_log",
     "raw_ms": [
-      527.0,
-      321.0,
-      384.0,
-      422.0,
-      521.0
+      1259.0,
+      635.0,
+      706.0,
+      559.0,
+      474.0
     ],
     "method": "sim_lane.run_mac_quiet：LSUIElement 隔离副本；open -g -j -n -> App os_log lane-ready（首屏数据与布局完成）；5 次中位数"
   },
@@ -475,16 +576,16 @@
     {
       "key": "cold_launch_to_ready",
       "label": "冷启动到首屏就绪",
-      "median_ms": 422.0,
+      "median_ms": 635.0,
       "runs": 5,
       "ready_signal": "os_log",
       "headline": true,
       "raw_ms": [
-        527.0,
-        321.0,
-        384.0,
-        422.0,
-        521.0
+        1259.0,
+        635.0,
+        706.0,
+        559.0,
+        474.0
       ],
       "method": "sim_lane.run_mac_quiet：LSUIElement 隔离副本；open -g -j -n -> App os_log lane-ready（首屏数据与布局完成）；5 次中位数"
     }
@@ -506,14 +607,15 @@
     "settle_s": null,
     "measured_at": "2026-10-07",
     "method": "对原登记常驻实例直接采样； measure.py idle <PID> --seconds 60 --with-helpers：内存为主进程 + WebKit/XPC 辅助进程 + 子进程同一时刻 phys_footprint 之和的峰值（活动监视器「内存」列同口径），CPU 为这些进程窗口内 CPU 时间增量之和 ÷ 墙钟；采样时本人在用电脑（被测 App 未在前台被使用，否则丢弃重采）",
-    "load": "负载均值 5.12 5.58 7.24；total = 3072.00M  used = 2445.56M  free = 626.44M",
-    "owner_idle_s_at_start": 168
+    "load": "负载均值 4.80 6.45 8.21；total = 4096.00M  used = 2766.88M  free = 1329.12M",
+    "owner_idle_s_at_start": 139
   },
+  "data_en": "Sampled while resident in built-in shortcut mode with the panel closed; the time from key press to the complete list is recorded by the app in last_show of menusearch status.",
   "runtime_measurement": {
     "environment": "native",
-    "evidence": "/Users/tianli/Library/Caches/app-lightweight/measurement-candidates/b35ef661fab34c55a0b250a989c54728.raw.json",
-    "evidence_sha256": "96458f6dfeea6876b87058c03007a44c3dd1a9ba7ec979a372be21ece56081d7",
-    "input_sha256": "78b019bdc49bd88921679ac8138173d1af26dc8d25752892f0bd9286f5f29f8c",
+    "evidence": "/Users/tianli/Library/Caches/app-lightweight/measurement-candidates/2662d23d241a4c768e69d5d8309cb633.raw.json",
+    "evidence_sha256": "da3a5b6dbb24c604f1961805bf20f61686dd3b3f1fafce1c243cbb7946b50285",
+    "input_sha256": "c38235ef09d2c824a84ef484b15845378ddba9b8beafd0eb159f1f9186cb47ab",
     "ready_signal": "os_log"
   }
 }
