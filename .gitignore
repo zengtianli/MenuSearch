@@ -1,0 +1,12 @@
+/build/
+/local/
+/perf/raw/
+/icon/AppIcon.iconset/
+.DS_Store
+/perf/acceptance/attempts/
+# Maintainer's working notes and per-run acceptance output stay on the maintainer's machine.
+/CLAUDE.md
+/handoffs/
+/docs/PRD.md
+/perf/acceptance/
+/perf/delivery-evidence.json

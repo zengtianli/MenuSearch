@@ -1,0 +1,164 @@
+name: menu-search
+name_en: MenuSearch
+name_zh: 菜单搜索
+display_name: MenuSearch · 菜单搜索
+family: menu-search
+form: mac
+lifecycle: active
+origin: own
+bundle_id: cyou.tianli.menusearch
+function: 独立 macOS 当前应用菜单搜索；公开发行，源码与安装包在 GitHub。
+description: 原生 macOS 菜单命令搜索：在任意 App 里按快捷键，列出并过滤该 App 菜单栏和各级子菜单的全部命令，回车执行；内置快捷键与外部呼出两种方式，同源 CLI menusearch。
+key_scripts:
+- build.sh
+- scripts/install.sh
+- scripts/release.py
+depends_on: []
+# 交付流程（SOP）事实，字段说明见 ~/Apps/chapter/engine/app_sop.py 的 SOP_KEYS。
+sop:
+  platforms:
+    mac: {}
+    iphone:
+      not_applicable: 功能是读取并执行 Mac 上其他 App 的菜单栏命令（辅助功能接口与全局快捷键）；iOS 没有菜单栏，也不开放读取其他 App 的界面。
+    ipad:
+      not_applicable: iPadOS 不开放读取或执行其他 App 菜单命令的接口，也没有系统级的自定义全局快捷键。
+    watch:
+      not_applicable: watchOS 没有菜单栏和其他 App 的可执行菜单命令。
+    vision:
+      not_applicable: visionOS 不开放读取或执行其他 App 菜单命令的辅助功能接口。
+  account:
+    mode: none
+    rationale: 本机工具，没有产品账号、注册或登录；菜单内容只在本机读取。可选的配置同步沿用系统 Apple ID 的 iCloud Drive。
+  product:
+    distribution: public
+    source_visibility: public
+    source_url: https://github.com/zengtianli/MenuSearch
+    rationale: 独立的菜单命令搜索工具，替代 Raycast 的 Search Menu Items；面向需要键盘直达菜单命令的 Mac 用户，MIT 开源，GitHub Releases 提供签名并公证的安装包，产品页提供演示与使用步骤。
+  # PRD 第 7 节首版预算：内置方式空闲 CPU 平均 ≤0.1%，phys_footprint ≤30 MB。
+  budget:
+    cpu: 0.1
+    memory_mb: 30
+  test: bash build.sh --test-only
+  test_inputs:
+  - Tests/**
+  # 固定验收：当前源码临时 ad-hoc 构建到 build/accept/<源码哈希>/（含逻辑测试与离屏自检），隔离目录驱动同一可执行文件；
+  # 不碰装机版、使用者的设置、真实快捷键、登录项和其他 App 的菜单，不上屏。
+  accept:
+    functionality: python3 scripts/accept/run.py functionality
+    recovery: python3 scripts/accept/run.py recovery
+    privacy: python3 scripts/accept/run.py privacy
+    native_ui: python3 scripts/accept/run.py native_ui
+  ui_self_test_flag: --self-test
+  source:
+  - Sources/**
+  - Resources/**
+  - Info.plist
+  - icon/AppIcon.icns
+  - build.sh
+  - LICENSE
+  ui:
+  - Sources/Panel.swift
+  - Sources/SettingsUI.swift
+  - Sources/AppLifecycleUI.swift
+  - Sources/App.swift
+  - Info.plist
+  - icon/**
+  # 产品页（apps.tianli.cyou 与 app-mac-menusearch.tianli.cyou）的截图由应用自己离屏渲染，列表是固定的演示菜单数据；
+  # 导览视频由门户的 scripts/prepare_homepage_media.py 从这三张截图合成。
+  media:
+  - site/assets
+  - ~/Apps/apps-portal/site/media/menu-search
+  media_meta: ~/Apps/apps-portal/site/media/menu-search/provenance.json
+  capture: bash scripts/site-shots.sh
+  site_deploy: portal
+  # 正式发行记录：scripts/release.py 公证并打包后写入（版本、构建号、来源提交、ZIP 与 DMG 的校验值和公证编号）。
+  release: perf/release.json
+  cli:
+    app: cyou.tianli.menusearch
+    commands:
+    - menusearch
+  # 界面上的每一项对应哪条命令（Chapter 的 agent_cli 检查读这里）。
+  agent_cli:
+    readback: menusearch status
+    features:
+    # 面板
+    - name: 呼出面板；再按一次、Esc 或点到别处关闭
+      command: menusearch show
+    - name: 列出当前 App 的全部菜单命令，输入过滤，↑↓ 浏览
+      command: menusearch scan
+    - name: 回车执行选中的命令
+      command: menusearch execute
+    - name: 刷新菜单（⌘R）
+      command: menusearch scan
+    - name: 页眉里的命令条数与读取耗时
+      command: menusearch status
+    - name: 从面板打开设置（⌘,）
+      command: menusearch settings
+    # 设置窗口：产品自己的分组
+    - name: 用途说明
+      command: menusearch help
+    - name: 辅助功能权限是否已允许
+      command: menusearch status
+    - name: 打开系统设置的辅助功能面板去授权
+      human: 系统授权只能由使用者在系统设置里打开
+    - name: 用什么呼出面板（内置快捷键 / 外部呼出）
+      command: menusearch config
+    - name: 录制快捷键
+      command: menusearch config
+    - name: 清除快捷键
+      command: menusearch config
+    - name: 拷贝外部呼出命令
+      human: 只在窗口里有意义；命令本身写在 menusearch help 里
+    - name: 登录时启动
+      command: menusearch config
+    - name: 退出 MenuSearch
+      command: menusearch quit
+    # 设置窗口：共享的配置与更新分组
+    - name: 使用 iCloud 记住配置（开关）
+      command: menusearch config
+    - name: iCloud 配置同步状态
+      command: menusearch status
+    - name: 导出配置…
+      command: menusearch config
+    - name: 导入配置…
+      command: menusearch config
+    - name: 当前版本
+      command: menusearch version
+    - name: 检查更新
+      command: menusearch update
+    - name: 升级到新版…
+      command: menusearch update
+    # 菜单栏图标、程序坞与主菜单
+    - name: 菜单栏图标菜单：搜索当前 App 的菜单
+      command: menusearch show
+    - name: 菜单栏图标菜单、程序坞菜单、主菜单：设置…
+      command: menusearch settings
+    - name: 菜单栏图标菜单、主菜单：退出 MenuSearch（⌘Q）
+      command: menusearch quit
+    - name: 点程序坞图标或用 ⌘Tab 切过来时打开设置
+      command: menusearch settings
+    - name: 程序坞与菜单栏图标是否显示
+      command: menusearch status
+    - name: 主菜单：关于 MenuSearch
+      command: menusearch version
+    - name: 主菜单：隐藏、隐藏其他、全部显示、关闭与最小化窗口
+      human: 只在窗口里有意义
+    - name: 主菜单：编辑（撤销、剪切、拷贝、粘贴、全选）
+      human: 只在窗口里有意义；用于设置窗口和面板里的文本框
+  measure:
+    # 单实例常驻 App：只被动采样正在运行的那一个，不另启动（再启动一个会因实例锁立即退出，量不到冷启动）。
+    # 常驻实例只在「内置快捷键」方式且已注册组合键时存在，此时它在程序坞和菜单栏里；外部呼出或未设快捷键时
+    # 进程按需结束，空闲占用为零，没有采样对象，应推迟而不是判失败。
+    # 冷启动：共享的 os_log 就绪测量，5 次启动装机版的隔离副本（-lane_quiet YES --app-measure）。副本走同一套启动
+    # 顺序，但用自己的临时目录（碰不到正在运行的实例和使用者的设置），不向系统注册快捷键、不进程序坞、不上屏；
+    # 就绪 = 控制通道已监听且面板已建好并完成布局。不含读取某个 App 菜单的时间。
+    # 下载大小取正式发行的 DMG。
+    app: /Applications/MenuSearch.app
+    running: /Applications/MenuSearch.app/Contents/MacOS/MenuSearch
+    launch: false
+    ready_signal: os_log
+    quiet_launch: [--app-measure]
+    in_use: true
+    download: build/release/MenuSearch-{short}-arm64.dmg
+    data: 内置快捷键方式常驻、面板未显示时采样；按下快捷键到完整结果的耗时由 App 记录在 menusearch status 的 last_show。
+    data_en: Sampled while resident in built-in shortcut mode with the panel closed; the time from key press to the complete list is recorded by the app in last_show of menusearch status.
