@@ -424,7 +424,13 @@ enum AppUpgradeInstaller {
         } catch { completion(.failure(error)) }
     }
 
-    static func launchReplacement(_ prepared: Prepared, currentBundle: URL, pid: Int32) throws {
+    /// The window passes its own pid and quits; the helper waits for that process, swaps the bundle and reopens the app.
+    /// The command line (`update install`) quits the running app itself first, passes pid 0 (nothing to wait for), waits
+    /// for the returned process and reads its exit status; `relaunch: false` leaves an app that was not running closed.
+    /// `backup` is the temporary rollback location (removed to Trash after verification; retained on failure).
+    /// `reopens` is whether the helper was told to open the app again (never in an isolated run).
+    @discardableResult
+    static func launchReplacement(_ prepared: Prepared, currentBundle: URL, pid: Int32, relaunch: Bool = true) throws -> (process: Process, backup: URL?, reopens: Bool) {
         guard FileManager.default.isWritableFile(atPath: currentBundle.deletingLastPathComponent().path),
               currentBundle.pathExtension == "app" else { throw AppUpdateError("当前安装目录不可写，请把 App 安装在用户可写的位置。") }
         if prepared.installation == "notifhub-collector" {
@@ -439,32 +445,86 @@ enum AppUpgradeInstaller {
             let log = prepared.directory.appendingPathComponent("install.log")
             FileManager.default.createFile(atPath: log.path, contents: nil)
             let handle = try FileHandle(forWritingTo: log); process.standardOutput = handle; process.standardError = handle
-            try process.run(); try handle.close(); return
+            try process.run(); try handle.close(); return (process, nil, true)
         }
         if let recipe = prepared.installation, recipe != "bundle" { throw AppUpdateError("此产品需要其专用安装事务：" + recipe) }
+        guard let info = NSDictionary(contentsOf: prepared.app.appendingPathComponent("Contents/Info.plist")) as? [String: Any],
+              let identifier = info["CFBundleIdentifier"] as? String,
+              let version = info["CFBundleShortVersionString"] as? String,
+              let build = info["CFBundleVersion"] as? String,
+              identifier == Bundle(url: currentBundle)?.bundleIdentifier,
+              !((try? currentBundle.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink) ?? true) else {
+            throw AppUpdateError("替换前 App 身份或路径不匹配。")
+        }
         // No user input, permissions, defaults or support directories are touched by this helper.
         let script = prepared.directory.appendingPathComponent("replace.sh")
         let body = """
         #!/bin/bash
         set -euo pipefail
         app_pid="$1"; source_app="$2"; target_app="$3"; task_dir="$4"; backup_app="$5"; relaunch="$6"
-        for ((attempt=0;attempt<120;attempt++)); do
-          if ! kill -0 "$app_pid" 2>/dev/null; then break; fi
-          sleep 0.5
-        done
-        if kill -0 "$app_pid" 2>/dev/null; then exit 1; fi
+        expected_id="$7"; expected_version="$8"; expected_build="$9"; trash_dir="${10}"
+        same_product() {
+          [ ! -L "$1" ] && [ -d "$1" ] &&
+            [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$1/Contents/Info.plist")" = "$expected_id" ]
+        }
+        verified_new() {
+          same_product "$target_app" &&
+            /usr/bin/codesign --verify --deep --strict "$target_app" &&
+            [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$target_app/Contents/Info.plist")" = "$expected_version" ] &&
+            [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$target_app/Contents/Info.plist")" = "$expected_build" ]
+        }
+        retire_old() {
+          local old="$1" name="$2"
+          same_product "$old" || return 1
+          /bin/mkdir -p "$trash_dir" || return 1
+          [ "$(/usr/bin/stat -f %d "$old")" = "$(/usr/bin/stat -f %d "$trash_dir")" ] || return 1
+          /bin/mv "$old" "$trash_dir/$name"
+        }
+        if [ "$app_pid" != 0 ]; then
+          for ((attempt=0;attempt<120;attempt++)); do
+            if ! kill -0 "$app_pid" 2>/dev/null; then break; fi
+            sleep 0.5
+          done
+          if kill -0 "$app_pid" 2>/dev/null; then exit 1; fi
+        fi
         next_app="${target_app%.app}.upgrade-$app_pid.app"
         /bin/mkdir -p "$(/usr/bin/dirname "$backup_app")"
         /usr/bin/ditto "$source_app" "$next_app"
         /usr/bin/codesign --verify --deep --strict "$next_app"
-        if [ -e "$backup_app" ]; then /bin/mv "$backup_app" "$task_dir/previous-backup.app"; fi
+        same_product "$target_app"
+        if [ -e "$backup_app" ] || [ -L "$backup_app" ]; then
+          same_product "$backup_app"
+          /bin/mv "$backup_app" "$task_dir/previous-backup.app"
+        fi
         /bin/mv "$target_app" "$backup_app"
         if ! /bin/mv "$next_app" "$target_app"; then /bin/mv "$backup_app" "$target_app"; exit 1; fi
-        if [ "$relaunch" = 1 ] && ! /usr/bin/open -g -j "$target_app"; then
+        started=1
+        if ! verified_new; then started=0; fi
+        if [ "$started" = 1 ] && [ "$relaunch" = 1 ]; then
+          if ! /usr/bin/open -g -j "$target_app"; then started=0; else
+            started=0
+            for ((attempt=0;attempt<40;attempt++)); do
+              while IFS= read -r running; do
+                case "$running" in "$target_app"/Contents/MacOS/*) started=1; break;; esac
+              done < <(/bin/ps -axo comm=)
+              [ "$started" = 1 ] && break
+              sleep 0.25
+            done
+          fi
+        fi
+        if [ "$started" != 1 ]; then
           /bin/mv "$target_app" "$task_dir/failed-new.app"
           /bin/mv "$backup_app" "$target_app"
-          /usr/bin/open -g -j "$target_app"
+          if [ "$relaunch" = 1 ]; then /usr/bin/open -g -j "$target_app"; fi
           exit 1
+        fi
+        if ! retire_old "$backup_app" "${target_app##*/}"; then
+          echo "cleanup_failed: installed app verified; old app retained at $backup_app" >&2
+          exit 2
+        fi
+        if [ -e "$task_dir/previous-backup.app" ] && ! retire_old "$task_dir/previous-backup.app" "previous-${target_app##*/}"; then
+          echo "cleanup_failed: previous old app retained at $task_dir/previous-backup.app" >&2
+          exit 2
         fi
         /bin/rm -rf "$task_dir"
         """
@@ -476,12 +536,18 @@ enum AppUpgradeInstaller {
         let isolatedRoot = environment["APP_LIFECYCLE_SUPPORT_DIR"].map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path + "/" }
         let noRelaunch = environment["APP_LIFECYCLE_NO_RELAUNCH"] == "1" && isolatedRoot.map { currentBundle.resolvingSymlinksInPath().path.hasPrefix($0) } == true
         let actualBackups = noRelaunch ? URL(fileURLWithPath: environment["APP_LIFECYCLE_SUPPORT_DIR"]!).appendingPathComponent("backups") : backups
+        let backup = actualBackups.appendingPathComponent(currentBundle.lastPathComponent)
+        let trash = (noRelaunch ? URL(fileURLWithPath: environment["APP_LIFECYCLE_SUPPORT_DIR"]!).appendingPathComponent("trash")
+                     : FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash"))
+            .appendingPathComponent(prepared.directory.lastPathComponent, isDirectory: true)
+        let reopens = relaunch && !noRelaunch
         process.arguments = [script.path, String(pid), prepared.app.path, currentBundle.path, prepared.directory.path,
-                             actualBackups.appendingPathComponent(currentBundle.lastPathComponent).path, noRelaunch ? "0" : "1"]
+                             backup.path, reopens ? "1" : "0", identifier, version, build, trash.path]
         let log = prepared.directory.appendingPathComponent("install.log")
         FileManager.default.createFile(atPath: log.path, contents: nil)
         let handle = try FileHandle(forWritingTo: log); process.standardOutput = handle; process.standardError = handle
         try process.run(); try handle.close()
+        return (process, backup, reopens)
     }
 
     private static func signingTeam(_ app: URL) throws -> String? {
