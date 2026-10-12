@@ -1,0 +1,81 @@
+# Same product sources as ../build.sh; the store build has no CLI or self-updater.
+name: MenuSearch
+options:
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.3.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: B9LJH93LA4
+targets:
+  MenuSearch:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: ../Sources
+        excludes:
+          - CLI.swift
+          - SelfTest.swift
+          - AppLifecycle.swift
+          - AppLifecycleUI.swift
+      - path: Assets.xcassets
+      - path: ../Resources/tuning.json
+        buildPhase: resources
+      - path: ../LICENSE
+        buildPhase: resources
+    dependencies:
+      - sdk: AppKit.framework
+      - sdk: ApplicationServices.framework
+      - sdk: Carbon.framework
+      - sdk: ServiceManagement.framework
+    preBuildScripts:
+      - name: Store version and assets
+        script: /bin/bash "$SRCROOT/check.sh"
+        basedOnDependencyAnalysis: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: cyou.tianli.menusearch
+        PRODUCT_NAME: MenuSearch
+        ARCHS: arm64
+        ENABLE_HARDENED_RUNTIME: YES
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: APP_STORE APP_LIFECYCLE_KVS
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        DEAD_CODE_STRIPPING: YES
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    info:
+      path: Info.plist
+      properties:
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleName: MenuSearch
+        CFBundleDisplayName: MenuSearch
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundlePackageType: APPL
+        CFBundleIconFile: AppIcon
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        LSUIElement: true
+        NSHighResolutionCapable: true
+        NSPrincipalClass: NSApplication
+        LSApplicationCategoryType: public.app-category.utilities
+        NSHumanReadableCopyright: Copyright © 2026 Tianli Zeng. MIT License.
+        ITSAppUsesNonExemptEncryption: false
+    entitlements:
+      path: MenuSearch.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        # Only the selected configuration JSON is read/written through open/save panels.
+        com.apple.security.files.user-selected.read-write: true
+        # Optional settings sync uses the system KVS transport, not a file outside the sandbox.
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+schemes:
+  MenuSearch:
+    build:
+      targets:
+        MenuSearch: all
+    archive:
+      config: Release

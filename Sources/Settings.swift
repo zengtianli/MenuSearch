@@ -139,6 +139,10 @@ final class SettingsStore {
                 guard let combo = Combo(json: raw) else { throw ProductError("快捷键无效") }
                 settings.hotkey = combo
             }
+            #if APP_STORE
+            // Download-build exports remain compatible; external CLI summon is not offered by the store build.
+            settings.mode = .builtin
+            #endif
             return settings
         } catch {
             loadError = "配置文件无法读取（\(error.localizedDescription)），当前使用默认设置；保存新设置时原文件会另存备份。"

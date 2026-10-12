@@ -1,6 +1,12 @@
 import AppKit
 import ApplicationServices
 
+#if APP_STORE
+typealias SettingsForm = StoreSettingsUI
+#else
+typealias SettingsForm = AppLifecycleUI
+#endif
+
 /// This product's groups in the shared settings window. Every control goes through Coordinator, the same methods
 /// the command line uses, and reflects whatever those methods left in effect.
 final class ProductSettings: NSObject {
@@ -8,16 +14,18 @@ final class ProductSettings: NSObject {
     let modePopup = NSPopUpButton()
     let recorder = HotkeyRecorder()
     let clearButton = NSButton(title: "清除", target: nil, action: nil)
-    let hotkeyDetail = AppLifecycleUI.detailLabel()
-    let modeDetail = AppLifecycleUI.detailLabel()
-    let accessDetail = AppLifecycleUI.detailLabel()
+    let hotkeyDetail = SettingsForm.detailLabel()
+    let modeDetail = SettingsForm.detailLabel()
+    let accessDetail = SettingsForm.detailLabel()
     let accessButton = NSButton(title: "打开系统设置…", target: nil, action: nil)
-    let commandDetail = AppLifecycleUI.detailLabel()
+    #if !APP_STORE
+    let commandDetail = SettingsForm.detailLabel()
     let copyButton = NSButton(title: "拷贝命令", target: nil, action: nil)
+    #endif
     let loginSwitch = NSSwitch()
-    let loginDetail = AppLifecycleUI.detailLabel()
+    let loginDetail = SettingsForm.detailLabel()
     let quitButton = NSButton(title: "退出", target: nil, action: nil)
-    let quitDetail = AppLifecycleUI.detailLabel()
+    let quitDetail = SettingsForm.detailLabel()
     private enum Row { case mode, hotkey, login }
     /// The result of the latest change made here, shown on the row it belongs to until the next change.
     private var feedback: (text: String, failed: Bool, row: Row)?
@@ -26,12 +34,19 @@ final class ProductSettings: NSObject {
     init(coordinator: Coordinator) {
         self.coordinator = coordinator
         super.init()
-        for mode in Mode.allCases {
+        #if APP_STORE
+        let modes: [Mode] = [.builtin]
+        let controls: [NSControl] = [clearButton, accessButton, loginSwitch, quitButton]
+        #else
+        let modes = Mode.allCases
+        let controls: [NSControl] = [modePopup, clearButton, accessButton, copyButton, loginSwitch, quitButton]
+        #endif
+        for mode in modes {
             modePopup.addItem(withTitle: mode.title)
             modePopup.lastItem?.representedObject = mode.rawValue
         }
         modePopup.widthAnchor.constraint(equalToConstant: 150).isActive = true
-        for control in [modePopup, clearButton, accessButton, copyButton, loginSwitch, quitButton] as [NSControl] {
+        for control in controls {
             control.target = self; control.action = #selector(changed(_:))
         }
         recorder.onBegin = { [weak self] in self?.coordinator.registrar.unregister() }
@@ -41,17 +56,22 @@ final class ProductSettings: NSObject {
     func groups() -> [NSView] {
         refresh()
         let keys = NSStackView(views: [recorder, clearButton]); keys.spacing = 8
-        let purpose = AppLifecycleUI.detailLabel("在任意 App 里按下快捷键，列出它菜单栏和各级子菜单里的全部命令；输入即过滤，↑↓ 选择，回车执行，Esc 关闭。菜单内容只在本机读取，不保存、不上传。")
+        let purpose = SettingsForm.detailLabel("在任意 App 里按下快捷键，列出它菜单栏和各级子菜单里的全部命令；输入即过滤，↑↓ 选择，回车执行，Esc 关闭。菜单内容只在本机读取，不保存、不上传。")
+        #if APP_STORE
+        let summon = [SettingsForm.row("内置快捷键呼出", detail: modeDetail),
+                      SettingsForm.row("快捷键", detail: hotkeyDetail, accessory: keys)]
+        #else
+        let summon = [SettingsForm.row("用什么呼出面板", detail: modeDetail, accessory: modePopup),
+                      SettingsForm.row("快捷键", detail: hotkeyDetail, accessory: keys),
+                      SettingsForm.row("外部呼出命令", detail: commandDetail, accessory: copyButton)]
+        #endif
         return [
-            AppLifecycleUI.group(nil, rows: [AppLifecycleUI.row("搜索当前 App 的菜单命令", detail: purpose)]),
-            AppLifecycleUI.group("权限", rows: [AppLifecycleUI.row("辅助功能", detail: accessDetail, accessory: accessButton)]),
-            AppLifecycleUI.group("呼出方式", rows: [
-                AppLifecycleUI.row("用什么呼出面板", detail: modeDetail, accessory: modePopup),
-                AppLifecycleUI.row("快捷键", detail: hotkeyDetail, accessory: keys),
-                AppLifecycleUI.row("外部呼出命令", detail: commandDetail, accessory: copyButton)]),
-            AppLifecycleUI.group("运行", rows: [
-                AppLifecycleUI.row("登录时启动", detail: loginDetail, accessory: loginSwitch),
-                AppLifecycleUI.row("退出 MenuSearch", detail: quitDetail, accessory: quitButton)])
+            SettingsForm.group(nil, rows: [SettingsForm.row("搜索当前 App 的菜单命令", detail: purpose)]),
+            SettingsForm.group("权限", rows: [SettingsForm.row("辅助功能", detail: accessDetail, accessory: accessButton)]),
+            SettingsForm.group("呼出方式", rows: summon),
+            SettingsForm.group("运行", rows: [
+                SettingsForm.row("登录时启动", detail: loginDetail, accessory: loginSwitch),
+                SettingsForm.row("退出 MenuSearch", detail: quitDetail, accessory: quitButton)])
         ]
     }
 
@@ -78,8 +98,10 @@ final class ProductSettings: NSObject {
         } else {
             hotkeyDetail.stringValue = builtin ? "尚未设置。点右侧按钮后按下组合键（至少带 ⌘、⌃ 或 ⌥），Esc 取消。" : "外部呼出方式下不需要。"
         }
+        #if !APP_STORE
         commandDetail.stringValue = builtin ? "\(Self.command)：其他工具也可以运行它来呼出，同一个面板。"
             : "\(Self.command)：把它绑到你的键位工具上。MenuSearch 不会改动那些工具的配置。"
+        #endif
         loginSwitch.state = coordinator.login.enabled ? .on : .off
         loginSwitch.isEnabled = builtin
         loginDetail.stringValue = builtin ? "开机登录后自动启动，不显示窗口。" : "外部呼出方式下不常驻，不需要登录时启动。"
@@ -130,11 +152,13 @@ final class ProductSettings: NSObject {
             // Makes the system list this application, then opens the pane where the user decides.
             _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+        #if !APP_STORE
         case copyButton:
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(Self.command, forType: .string)
             feedback = nil
             commandDetail.stringValue = "已拷贝：\(Self.command)"
+        #endif
         case quitButton: coordinator.terminate()
         default: break
         }

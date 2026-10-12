@@ -68,6 +68,7 @@ enum KeyConflicts {
         return nil
     }
 
+    #if !APP_STORE
     /// Other applications' declarations in the optional cross-application registry (~/.config/mackit/keys.d).
     /// The registry is a convention between this user's apps; it is read when present and never required.
     static var registryDirectory: URL? {
@@ -149,6 +150,7 @@ enum KeyConflicts {
         if (try? FileManager.default.destinationOfSymbolicLink(atPath: target.path)) != nil { return }
         try? data.write(to: target, options: .atomic)
     }
+    #endif
 }
 
 /// Records a shortcut: click, then press the combination. Esc cancels and keeps the current one.

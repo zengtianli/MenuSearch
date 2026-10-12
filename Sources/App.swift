@@ -23,6 +23,19 @@ struct SystemLoginItem: LoginItem {
     func set(_ on: Bool) throws { if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() } }
 }
 
+#if APP_STORE
+private final class StoreQuietRegistrar: HotkeyRegistering {
+    var combo: Combo? { nil }
+    func register(_ combo: Combo) -> Bool { false }
+    func unregister() {}
+}
+private struct StoreQuietLoginItem: LoginItem {
+    var status: String { "unavailable" }
+    var enabled: Bool { false }
+    func set(_ on: Bool) throws { throw ProductError("静默副本不能更改登录项。") }
+}
+#endif
+
 /// The one place that decides how the panel is summoned and whether the process stays. The settings window, the
 /// shortcut callback and every command-line request go through these methods, so a change and its rollback are
 /// the same code whoever asks.
@@ -35,8 +48,13 @@ final class Coordinator: NSObject {
     /// The shortcut works, but something else declares the same combination.
     private(set) var hotkeyWarning: String?
     var systemConflict: (Combo) -> String? = KeyConflicts.system
+    #if APP_STORE
+    var registryConflict: (Combo) -> String? = { _ in nil }
+    var declare: (Settings) -> Void = { _ in }
+    #else
     var registryConflict: (Combo) -> String? = { KeyConflicts.skhd($0) ?? KeyConflicts.registered($0) }
     var declare: (Settings) -> Void = { KeyConflicts.declare($0) }
+    #endif
     var terminate: () -> Void = { NSApp.terminate(nil) }
     var login: LoginItem = SystemLoginItem()
     var onChange: (() -> Void)?
@@ -151,6 +169,12 @@ final class Coordinator: NSObject {
     @discardableResult
     func show(pid: pid_t?, requestedAt: Date = Date(), source: String) -> [String: Any] {
         if panelActive { panel.close(); return ["ok": true, "action": "closed"] }
+        #if APP_STORE
+        guard AXIsProcessTrusted() else {
+            panel.presentAccessibilityGuidance()
+            return ["ok": false, "action": "message_shown", "error": MenuSearchError.accessibility.localizedDescription]
+        }
+        #endif
         do {
             let target = try resolveTarget(pid: pid)
             showSource = source
@@ -216,6 +240,9 @@ final class Coordinator: NSObject {
 
     /// Stops the old shortcut source, then starts the new one; if the new one cannot start, the old one comes back.
     func setMode(_ mode: Mode) -> Result<String?, ProductError> {
+        #if APP_STORE
+        guard mode == .builtin else { return .failure(ProductError("Mac App Store 版使用内置快捷键呼出。")) }
+        #endif
         guard mode != settings.mode else { return .success(nil) }
         defer { updatePresence() }
         var notice: String?
@@ -315,10 +342,12 @@ final class Coordinator: NSObject {
         case "reload":
             reloadFromDisk()
             return status()
+        #if !APP_STORE
         case "update":
             guard !testing else { return ["ok": false, "error": "隔离环境不能升级。"] }
             startUpgrade()
             return ["ok": true, "action": "upgrade_started"]
+        #endif
         case "quit":
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in self?.terminate() }
             return ["ok": true, "action": "quit"]
@@ -329,6 +358,7 @@ final class Coordinator: NSObject {
     /// What the settings window's "升级到新版…" does, without the confirmation sheet: download the published package,
     /// verify its checksum, signature and notarization, hand the swap to the shared helper and quit. A failure
     /// leaves this build in place.
+    #if !APP_STORE
     private func startUpgrade() {
         upgradeError = nil
         grace(180)
@@ -360,6 +390,7 @@ final class Coordinator: NSObject {
             }
         }
     }
+    #endif
 
     // MARK: Settings window
 
@@ -372,9 +403,13 @@ final class Coordinator: NSObject {
         let product = ProductSettings(coordinator: self)
         productSettings = product
         onChange = { [weak product] in product?.refresh() }
+        #if APP_STORE
+        StoreSettingsUI.install(product: product, configuration: configuration)
+        #else
         AppLifecycleUI.shared.productGroups = { [weak product] in product?.groups() ?? [] }
         AppLifecycleUI.shared.willShow = { [weak product] in product?.refresh() }
         AppLifecycleUI.install(name: Env.productName, configuration: configuration, updateSource: UpdateChannel.current.updateSource)
+        #endif
     }
 
     func openSettings() {
@@ -383,7 +418,11 @@ final class Coordinator: NSObject {
         updatePresence()
         guard !testing else { return }
         if let front = NSWorkspace.shared.frontmostApplication, front.processIdentifier != getpid() { applicationBeforeSettings = front }
+        #if APP_STORE
+        StoreSettingsUI.shared.show()
+        #else
         AppLifecycleUI.shared.show()
+        #endif
         if settingsWindow == nil, let window = NSApp.windows.first(where: { $0.title == "\(Env.productName) 设置" }) {
             settingsWindow = window
             NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in
@@ -419,6 +458,7 @@ final class Coordinator: NSObject {
 /// Where new versions come from: this product's public GitHub Releases. Named once, here, in the literal form the
 /// shared lifecycle expects; the settings window, the control socket and the command line all read it.
 /// Nothing asks the network on its own: a release is looked up only when the user checks for updates.
+#if !APP_STORE
 struct UpdateChannel {
     let updateSource: AppUpdateSource
     static let current = UpdateChannel(updateSource: .github(repository: "zengtianli/MenuSearch"))
@@ -431,6 +471,7 @@ struct UpdateChannel {
         }
     }
 }
+#endif
 
 /// The menu under the menu bar icon: search the application in front, open the settings, quit.
 enum MenuBarMenu {
@@ -472,8 +513,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation, 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let hotkey = GlobalHotkey { [weak self] in self?.coordinator.show(pid: nil, requestedAt: Date(), source: "builtin") }
         self.hotkey = hotkey
+        #if APP_STORE
+        coordinator.registrar = measuring ? StoreQuietRegistrar() : hotkey
+        if measuring { coordinator.declare = { _ in }; coordinator.login = StoreQuietLoginItem() }
+        #else
         coordinator.registrar = measuring ? NullRegistrar() : hotkey
         if measuring { coordinator.declare = { _ in }; coordinator.login = UnavailableLoginItem() }
+        #endif
         NSApp.mainMenu = buildMenu()
         // A measured copy stays a background process whatever its settings say.
         if !measuring {
@@ -486,7 +532,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation, 
                     "menu_bar_icon_on_screen": window.map { $0.screen != nil && $0.occlusionState.contains(.visible) } ?? false]
         }
         coordinator.start()
+        #if !APP_STORE
         if !measuring { KeyConflicts.declareIfMissing(coordinator.settings) }
+        #endif
         coordinator.installSettingsWindow()
         activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] note in
@@ -499,8 +547,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation, 
             forName: NSNotification.Name("com.apple.accessibility.api"), object: nil, queue: .main) { [weak self] _ in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self?.coordinator.onChange?() }
         }
+        #if !APP_STORE
         server.handler = { [weak self] in self?.coordinator.handle($0) ?? ["ok": false, "error": "MenuSearch 正在退出。"] }
         do { try server.listen() } catch { NSLog("MenuSearch: %@", error.localizedDescription) }
+        #endif
         if measuring {
             // Ready to answer a summon: listening, and the panel the first press would build is built and laid out.
             coordinator.panel.panel.contentView?.layoutSubtreeIfNeeded()
@@ -637,12 +687,14 @@ enum AppMain {
         guard server.acquire() else {
             // Another instance already listens; a plain second open means "show the settings window".
             if measuring { exit(1) }
+            #if !APP_STORE
             if !background {
                 for _ in 0..<100 {
                     if Control.request(["cmd": "settings"], timeout: 2) != nil { break }
                     usleep(20_000)
                 }
             }
+            #endif
             exit(0)
         }
         let application = NSApplication.shared

@@ -348,6 +348,17 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
         show()
     }
 
+    #if APP_STORE
+    /// The same explicit state is used before scanning and by the offscreen store check.
+    func presentAccessibilityGuidance() {
+        begin(name: "", icon: NSApp.applicationIconImage)
+        showEmpty(MenuSearchError.accessibility.localizedDescription, accessibility: true)
+        state.stringValue = "请先允许辅助功能权限"
+        state.textColor = .systemOrange
+        show()
+    }
+    #endif
+
     private func begin(name: String, icon: NSImage?) {
         active = true; generation += 1
         busy = false; executing = false
