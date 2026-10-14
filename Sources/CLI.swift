@@ -88,7 +88,8 @@ enum CLI {
     static func run(_ arguments: [String]) -> Int32 {
         #if !APP_STORE
         if arguments.first == "update", let sub = arguments.dropFirst().first, ["check", "options", "install"].contains(sub) {
-            if Env.isolated && sub != "options" && !arguments.contains("--help") && !arguments.contains("-h") {
+            let writesOptions = sub == "options" && arguments.contains("--yes") && !arguments.contains("--dry-run")
+            if Env.isolated && (sub != "options" || writesOptions) && !arguments.contains("--help") && !arguments.contains("-h") {
                 return fail(isolationRefusal, json: arguments.contains("--json"))
             }
             return AppLifecycleCLI.run(arguments, product: lifecycleProduct())
