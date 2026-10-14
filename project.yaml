@@ -128,6 +128,14 @@ sop:
       command: menusearch update
     - name: 升级到新版…
       command: menusearch update
+    - name: 更新自动检查、下载、空闲安装与间隔
+      command: menusearch update options
+    - name: 更新说明、发布时间与检查记录
+      command: menusearch update check
+    - name: 跳过版本与稍后提醒
+      command: menusearch update options
+    - name: 更新下载、验证与取消
+      human: 下载与验证进度在设置窗口中显示，点取消保留当前版本
     # 菜单栏图标、程序坞与主菜单
     - name: 菜单栏图标菜单：搜索当前 App 的菜单
       command: menusearch show

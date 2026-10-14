@@ -89,6 +89,8 @@ The command and the app are one executable sharing the same settings and backgro
 | `menusearch config get｜set mode｜set hotkey｜set login｜export｜import｜path` | Read and change configuration, export, import |
 | `menusearch config set icloud on\|off` | Keep the configuration in iCloud; the same switch as in the settings window |
 | `menusearch update [--install] [--json]` | Ask GitHub for the latest published release; the network is used only when this command runs. `--install` has the app download and verify the package, upgrade and keep the configuration, and the start that follows shows no window |
+| `menusearch update check｜options｜install --yes` | Use the settings window's updater: version, release notes and check history; automatic options, interval and skip/remind; verified installation. Existing commands remain supported |
+| `menusearch config status --json` | Transferable settings and iCloud sync status |
 | `menusearch quit` | Quit the background instance |
 | `menusearch help`, `version` | Usage, version |
 
@@ -100,14 +102,14 @@ Exit codes: `0` success; `1` not completed (no permission, incomplete menu, targ
 
 Settings live in `~/Library/Application Support/cyou.tianli.menusearch/settings.json` and hold two things: the mode and the shortcut. The settings window can export and import them and can turn on iCloud configuration sync (the system Apple ID's iCloud Drive, off by default). The Accessibility permission, login item, runtime state and menu content are never part of it. A damaged settings file is not silently overwritten: the app runs on defaults, says why, and keeps a copy of the original at the next save.
 
-"检查更新" (Check for updates) asks GitHub for this repository's latest published release. It runs only when you click it (or run `menusearch update`): never in the background and not at launch.
+"检查更新" (Check for updates) asks GitHub for this repository's latest published release. Automatic checks, downloads and idle installation are disabled by default. You can enable them in settings or with `menusearch update options`, choose the interval, skip a version or postpone reminders. Replacement waits while the menu panel is in use.
 
 The few values that follow macOS rather than this app (which top-level menus belong to the system, read time limits) ship in `tuning.json`; a file of the same name in the support directory overrides single keys without reinstalling.
 
 ## Privacy and network
 
 - Menu content is read locally, used and dropped; nothing is written or uploaded. The app records only the item count and timing of the latest summon.
-- The only network use is the update check: when you click 检查更新 or run `menusearch update`, the app requests this repository's latest release information from GitHub, and downloads the package from GitHub if you choose to upgrade. There is no automatic check, and the request carries no menu content or device information. Apart from that the app opens no network connection, and a running instance holds no internet socket (the acceptance checks include this).
+- Network access is limited to updates: an explicit check, or automatic checks you enable, requests release information from GitHub; an explicit upgrade, or automatic downloads you enable, downloads the package. Automatic behavior is disabled by default. Requests contain no menu content or device information. The isolated acceptance checks verify that a background instance with default settings holds no internet socket.
 - The optional iCloud configuration sync reads and writes iCloud Drive's local folder and leaves syncing to the system; it is off by default.
 - The shortcut is one specific combination registered with the system. No keyboard monitoring, no key logging, no synthetic input.
 - No account, no analytics.

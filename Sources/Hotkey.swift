@@ -160,7 +160,8 @@ final class HotkeyRecorder: NSButton {
     /// nil when recording was cancelled.
     var onEnd: ((Combo?) -> Void)?
     private var monitor: Any?
-    private var resignObserver: NSObjectProtocol?
+    private var observers: [NSObjectProtocol] = []
+    private weak var recordingWindow: NSWindow?
     var isRecording: Bool { monitor != nil }
 
     override init(frame: NSRect) {
@@ -176,19 +177,37 @@ final class HotkeyRecorder: NSButton {
     private func refresh() { title = isRecording ? "请按快捷键…" : (combo?.display ?? "录制快捷键") }
 
     @objc private func startRecording() {
-        guard monitor == nil else { return }
+        guard monitor == nil, let window, window.isVisible, window.isKeyWindow, NSApp.isActive else { return }
+        recordingWindow = window
         onBegin?()
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self else { return event }
+            guard let window = self.recordingWindow, window.isVisible, window.isKeyWindow, NSApp.isActive else {
+                self.stop(nil); return event
+            }
+            guard event.window === window else { return event }
             if event.keyCode == 53 { self.stop(nil); return nil }
             guard let combo = Self.combo(from: event) else { NSSound.beep(); return nil }
             self.stop(combo)
             return nil
         }
-        resignObserver = NotificationCenter.default.addObserver(forName: NSWindow.didResignKeyNotification, object: window, queue: .main) { [weak self] _ in
-            self?.stop(nil)
+        for name in [NSWindow.didResignKeyNotification, NSWindow.willCloseNotification] {
+            observers.append(NotificationCenter.default.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in self?.stop(nil) })
         }
+        observers.append(NotificationCenter.default.addObserver(forName: NSApplication.didResignActiveNotification, object: NSApp, queue: .main) { [weak self] _ in self?.stop(nil) })
         refresh()
+    }
+
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        if newWindow !== window { stop(nil) }
+        super.viewWillMove(toWindow: newWindow)
+    }
+
+    func cancelRecording() { stop(nil) }
+
+    deinit {
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        for observer in observers { NotificationCenter.default.removeObserver(observer) }
     }
 
     static func combo(from event: NSEvent) -> Combo? {
@@ -205,8 +224,9 @@ final class HotkeyRecorder: NSButton {
         guard let monitor else { return }
         NSEvent.removeMonitor(monitor)
         self.monitor = nil
-        if let resignObserver { NotificationCenter.default.removeObserver(resignObserver) }
-        resignObserver = nil
+        for observer in observers { NotificationCenter.default.removeObserver(observer) }
+        observers.removeAll()
+        recordingWindow = nil
         refresh()
         onEnd?(result)
     }

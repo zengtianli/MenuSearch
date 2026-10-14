@@ -460,6 +460,10 @@ enum SelfTest {
             product.recordForTest(altM)
             checks["settings_record_applies"] = product.recorder.title == "⌥M" && registrar.combo == altM && stored().hotkey == altM
             _ = try AppLifecycleUI.shared.offscreenSnapshot(to: out.appendingPathComponent("settings-recorded-light.png"), appearance: .aqua)
+            product.recorder.performClick(nil)
+            checks["hidden_window_cannot_start_key_recording"] = !product.recorder.isRecording && registrar.combo == altM
+            _ = try AppLifecycleUI.shared.offscreenSnapshot(to: out.appendingPathComponent("settings-updates-light.png"), appearance: .aqua, showingUpdateOptions: true)
+            _ = try AppLifecycleUI.shared.offscreenSnapshot(to: out.appendingPathComponent("settings-updates-dark.png"), appearance: .darkAqua, showingUpdateOptions: true)
         } else { checks["settings_reflect_state"] = false }
 
         // Configuration export and import, through the same object the window and `menusearch config` use.
@@ -474,6 +478,18 @@ enum SelfTest {
         let foreign = try JSONSerialization.data(withJSONObject: ["version": 1, "product": "cyou.tianli.mackit", "values": ["file.0.mode": "external"]])
         checks["config_import_rejects_invalid"] = (try? transfer.importData(invalid)) == nil && (try? transfer.importData(foreign)) == nil
             && stored() == Settings(mode: .builtin, hotkey: altM)
+        let beforeBadImport = try Data(contentsOf: store.url)
+        let wrongFields: [[String: Any]] = [
+            ["file.0.mode": altM.json], ["file.0.hotkey": "builtin"],
+            ["file.0.mode": NSNull()], ["file.0.hotkey": ["key_code": true, "modifiers": ["alt"]]],
+            ["file.0.mode": "external", "file.0.hotkey": ["key_code": 46.8, "modifiers": ["alt"]]]
+        ]
+        checks["config_wrong_field_import_is_atomic"] = try wrongFields.allSatisfy { values in
+            let data = try JSONSerialization.data(withJSONObject: ["version": 1, "product": Env.bundleID, "values": values])
+            let rejected = (try? transfer.importData(data)) == nil
+            let after = try Data(contentsOf: store.url)
+            return rejected && after == beforeBadImport
+        }
         let text = String(decoding: exported, as: UTF8.self)
         checks["config_export_has_only_preferences"] = text.contains("file.0.mode") && text.contains("file.0.hotkey")
             && !text.contains(NSHomeDirectory()) && !text.contains("pid") && !text.contains("last_show")

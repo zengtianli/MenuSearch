@@ -361,6 +361,7 @@ final class Coordinator: NSObject {
     #if !APP_STORE
     private func startUpgrade() {
         upgradeError = nil
+        guard !panelActive else { upgradeError = "菜单面板正在使用，关闭后再升级。"; return }
         grace(180)
         guard let bundle = Env.bundleURL else { upgradeError = "没有在 .app 里运行。"; return }
         AppUpdateChecker.check(source: UpdateChannel.current.updateSource, bundleID: Env.bundleID,
@@ -396,10 +397,11 @@ final class Coordinator: NSObject {
 
     /// Wires the shared settings/update window with this product's own groups and its transferable configuration.
     func installSettingsWindow() {
-        let file = AppConfigurationFile(url: store.url, keys: ["mode", "hotkey"]) { try Settings.validate(field: $0) }
+        let file = AppConfigurationFile(url: store.url, keys: ["mode", "hotkey"], validateField: { try Settings.validate(field: $0, value: $1) })
         let configuration = AppConfiguration(productID: Env.bundleID, files: [file])
         configuration.onChange = { [weak self] in self?.reloadFromDisk() }
         self.configuration = configuration
+        AppLifecycleCLI.follow(configuration)
         let product = ProductSettings(coordinator: self)
         productSettings = product
         onChange = { [weak product] in product?.refresh() }
@@ -408,6 +410,7 @@ final class Coordinator: NSObject {
         #else
         AppLifecycleUI.shared.productGroups = { [weak product] in product?.groups() ?? [] }
         AppLifecycleUI.shared.willShow = { [weak product] in product?.refresh() }
+        AppLifecycleUI.shared.canInstallUpdate = { [weak self] in self?.panelActive != true }
         AppLifecycleUI.install(name: Env.productName, configuration: configuration, updateSource: UpdateChannel.current.updateSource)
         #endif
     }
@@ -432,6 +435,7 @@ final class Coordinator: NSObject {
     }
 
     func settingsClosed() {
+        productSettings?.recorder.cancelRecording()
         settingsVisible = false
         updatePresence()
         if !testing, NSApp.isActive {

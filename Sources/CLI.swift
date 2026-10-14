@@ -40,7 +40,13 @@ enum CLI {
           config export [文件]             导出配置；缺省写到标准输出
           config import <文件>             导入配置，原配置自动备份
           config path                      配置文件位置
+          config status [--json]            iCloud 配置同步状态与可迁移项
+          config sync on|off --yes          iCloud 配置同步开关；--dry-run 仅预演
+          config export -o 文件 [--force]   导出同一配置，默认不覆盖；旧 config export [文件] 可继续用
           update [--install] [--json]      查询 GitHub 上的最新正式版（只在运行这条命令时联网）；--install 下载、验证后升级，配置保留
+        \(AppLifecycleCLI.helpUpdate)
+        \(AppLifecycleCLI.helpOptions)
+        \(AppLifecycleCLI.helpInstall("menusearch"))
           quit                             退出后台实例
           help | --help                    显示本说明
           version | --version              显示版本
@@ -80,6 +86,22 @@ enum CLI {
     private static let isolationRefusal = "隔离环境（MENUSEARCH_SUPPORT_DIR）不能读取或操作本机的 App、快捷键和后台实例。"
 
     static func run(_ arguments: [String]) -> Int32 {
+        #if !APP_STORE
+        if arguments.first == "update", let sub = arguments.dropFirst().first, ["check", "options", "install"].contains(sub) {
+            if Env.isolated && sub != "options" && !arguments.contains("--help") && !arguments.contains("-h") {
+                return fail(isolationRefusal, json: arguments.contains("--json"))
+            }
+            return AppLifecycleCLI.run(arguments, product: lifecycleProduct())
+        }
+        #endif
+        if arguments.first == "config", let sub = arguments.dropFirst().first,
+           ["status", "sync"].contains(sub) || sub == "export" && arguments.contains("-o") || sub == "import" && arguments.contains("--yes") {
+            if Env.isolated && sub == "sync" && !arguments.contains("--help") && !arguments.contains("-h") {
+                return fail(isolationRefusal, json: arguments.contains("--json"))
+            }
+            return AppLifecycleCLI.run(arguments, product: lifecycleProduct())
+        }
+        if arguments.dropFirst().contains("--help") || arguments.dropFirst().contains("-h") { print(usage); return 0 }
         var rest = arguments
         let json = rest.contains("--json")
         rest.removeAll { $0 == "--json" }
@@ -288,8 +310,22 @@ enum CLI {
     // MARK: config
 
     static func configuration(store: SettingsStore = SettingsStore()) -> AppConfiguration {
-        let file = AppConfigurationFile(url: store.url, keys: ["mode", "hotkey"]) { try Settings.validate(field: $0) }
+        let file = AppConfigurationFile(url: store.url, keys: ["mode", "hotkey"], validateField: { try Settings.validate(field: $0, value: $1) })
         return AppConfiguration(productID: Env.bundleID, files: [file])
+    }
+
+    private static func lifecycleProduct() -> AppLifecycleCLI.Product {
+        #if APP_STORE
+        let source: AppUpdateSource = .appStore
+        #else
+        let source = UpdateChannel.current.updateSource
+        #endif
+        var product = AppLifecycleCLI.Product(command: "menusearch", name: Env.productName,
+                                             configuration: configuration(), updateSource: source, windowEntry: "设置…")
+        product.changed = { if !Env.isolated { _ = Control.request(["cmd": "reload"]) } }
+        product.runningApp = { Env.isolated ? [] : (Control.request(["cmd": "status"])?["pid"] as? Int32).map { [$0] } ?? [] }
+        product.canInstallUpdate = { Env.isolated || Control.request(["cmd": "status"])?["panel_visible"] as? Bool != true }
+        return product
     }
 
     /// The settings window's "使用 iCloud 记住配置" switch, read from the application's own preferences.

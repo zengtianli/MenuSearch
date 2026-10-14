@@ -64,9 +64,18 @@ do {
     try Data("{\"mode\":\"builtin\",\"hotkey\":{\"key_code\":46,\"modifiers\":[\"shift\"]}}".utf8).write(to: store.url)
     expect(store.load() == Settings() && store.loadError != nil, "unusable stored shortcut falls back")
 } catch { failures.append("settings store: \(error.localizedDescription)") }
-expect((try? Settings.validate(field: "external")) != nil && (try? Settings.validate(field: "sometimes")) == nil
-    && (try? Settings.validate(field: ["key_code": 46, "modifiers": ["alt"]] as [String: Any])) != nil
-    && (try? Settings.validate(field: ["key_code": 46] as [String: Any])) == nil, "imported fields are validated")
+expect((try? Settings.validate(field: "mode", value: "external")) != nil
+    && (try? Settings.validate(field: "mode", value: "sometimes")) == nil
+    && (try? Settings.validate(field: "hotkey", value: ["key_code": 46, "modifiers": ["alt"]] as [String: Any])) != nil
+    && (try? Settings.validate(field: "hotkey", value: ["key_code": 46] as [String: Any])) == nil, "imported fields are validated")
+expect((try? Settings.validate(field: "mode", value: ["key_code": 46, "modifiers": ["alt"]] as [String: Any])) == nil
+    && (try? Settings.validate(field: "hotkey", value: "builtin")) == nil
+    && (try? Settings.validate(field: "mode", value: NSNull())) == nil, "import refuses a valid value in the wrong field")
+expect(Combo(json: ["key_code": true, "modifiers": ["alt"]]) == nil
+    && Combo(json: ["key_code": 46.8, "modifiers": ["alt"]]) == nil
+    && Combo(json: ["key_code": -1, "modifiers": ["alt"]]) == nil
+    && Combo(json: ["key_code": 46, "modifiers": ["alt", "alt"]]) == nil,
+    "shortcut JSON rejects bool, fractional, negative and duplicate modifiers")
 
 // Tuning data.
 var tuning = Tuning()

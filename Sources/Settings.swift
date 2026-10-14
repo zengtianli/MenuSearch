@@ -62,9 +62,13 @@ struct Combo: Equatable {
     }
 
     init?(json: Any?) {
-        guard let object = json as? [String: Any], let code = (object["key_code"] as? NSNumber)?.uint32Value,
-              let modifiers = object["modifiers"] as? [String] else { return nil }
-        self.init(keyCode: code, modifiers: modifiers)
+        guard let object = json as? [String: Any], Set(object.keys) == Set(["key_code", "modifiers"]),
+              let number = object["key_code"] as? NSNumber,
+              CFGetTypeID(number) != CFBooleanGetTypeID(), number.doubleValue.isFinite,
+              number.doubleValue >= 0, number.doubleValue <= Double(UInt32.max),
+              number.doubleValue.rounded() == number.doubleValue,
+              let modifiers = object["modifiers"] as? [String], Set(modifiers).count == modifiers.count else { return nil }
+        self.init(keyCode: number.uint32Value, modifiers: modifiers)
     }
 
     var json: [String: Any] { ["key_code": Int(keyCode), "modifiers": modifiers] }
@@ -110,10 +114,14 @@ struct Settings: Equatable {
     }
 
     /// Used for imported and synced values as well: one rule for what a stored field may contain.
-    static func validate(field value: Any) throws {
-        if value is NSNull { return }
-        if let text = value as? String { guard Mode(rawValue: text) != nil else { throw ProductError("未知的呼出方式：\(text)") }; return }
-        guard Combo(json: value) != nil else { throw ProductError("快捷键配置无效。") }
+    static func validate(field key: String, value: Any) throws {
+        switch key {
+        case "mode":
+            guard let text = value as? String, Mode(rawValue: text) != nil else { throw ProductError("呼出方式只能是 builtin 或 external。") }
+        case "hotkey":
+            guard value is NSNull || Combo(json: value) != nil else { throw ProductError("快捷键配置无效。") }
+        default: throw ProductError("未知的配置项：\(key)")
+        }
     }
 }
 

@@ -89,6 +89,8 @@ mkdir -p ~/.local/bin && ln -s /Applications/MenuSearch.app/Contents/MacOS/MenuS
 | `menusearch config get｜set mode｜set hotkey｜set login｜export｜import｜path` | 查看和修改配置，导出、导入 |
 | `menusearch config set icloud on\|off` | 用 iCloud 记住配置，同设置窗口里的开关 |
 | `menusearch update [--install] [--json]` | 查询 GitHub 上的最新正式版，只在运行这条命令时联网；`--install` 由 App 下载并验证发行包后升级，配置保留，升级后的启动不弹窗口 |
+| `menusearch update check｜options｜install --yes` | 与设置窗口共用更新器；查询版本/说明/检查记录，设置自动行为、间隔和跳过/延后，或验证后安装；旧命令继续可用 |
+| `menusearch config status --json` | 可迁移配置项及 iCloud 同步状态 |
 | `menusearch quit` | 退出后台实例 |
 | `menusearch help`、`version` | 说明、版本 |
 
@@ -100,14 +102,14 @@ mkdir -p ~/.local/bin && ln -s /Applications/MenuSearch.app/Contents/MacOS/MenuS
 
 设置存在 `~/Library/Application Support/cyou.tianli.menusearch/settings.json`，只有呼出方式和快捷键两项。设置窗口可以导出、导入，也可以打开「使用 iCloud 记住配置」（沿用系统 Apple ID 的 iCloud Drive，默认关闭）。辅助功能权限、登录项、运行状态和菜单内容都不在其中。损坏的设置文件不会被悄悄覆盖：先按默认设置运行并说明原因，下次保存时原文件另存备份。
 
-「检查更新」向 GitHub 查询这个仓库的最新正式版，只在你点它（或运行 `menusearch update`）时执行，不在后台轮询，启动时也不检查。
+「检查更新」向 GitHub 查询这个仓库的最新正式版。默认只在你点它或运行 `menusearch update` 时执行；自动检查、自动下载和空闲安装都默认关闭。可以在设置窗口或 `menusearch update options` 中选择开启、设置间隔、跳过某版或稍后提醒；使用菜单面板时延后替换。
 
 会随 macOS 变化的少数值（哪些顶层菜单属于系统、读取时限）放在随包的 `tuning.json`；在支持目录放一个同名文件可以逐项覆盖，不需要重新安装。
 
 ## 隐私与联网
 
 - 菜单内容只在本机读取，用完即弃，不写文件、不上传。App 记录的只有最近一次呼出的条数和耗时。
-- 唯一的联网是检查更新：你点「检查更新」或运行 `menusearch update` 时，向 GitHub 请求这个仓库的最新发行信息；选择升级时再从 GitHub 下载安装包。不自动检查，请求里不带任何菜单内容或设备信息。除此之外 App 不发起网络连接，运行中的实例不持有任何网络套接字（验收里有这一项）。
+- 联网仅用于更新：主动检查或自行开启自动检查后向 GitHub 请求发行信息，选择升级或自行开启自动下载后下载安装包。自动行为默认关闭，请求不带菜单内容或设备信息。默认配置的后台实例不发起网络请求，隔离验收会核查它没有联网套接字。
 - 可选的「使用 iCloud 记住配置」读写的是 iCloud Drive 在本机的目录，由系统负责同步；默认关闭。
 - 快捷键是向系统注册的一个具体组合键，不监听键盘、不记录按键，也不合成输入。
 - 没有账号，没有统计。

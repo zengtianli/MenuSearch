@@ -24,7 +24,7 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
-VENDORED = {"AppLifecycle.swift", "AppConfiguration.swift", "AppLifecycleUI.swift", "LaneSignal.swift"}
+VENDORED = {"AppLifecycle.swift", "AppConfiguration.swift", "AppLifecycleUI.swift", "AppLifecycleCLI.swift", "LaneSignal.swift"}
 VENDOR = Path(os.environ.get("APP_LIFECYCLE_VENDOR") or Path.home() / "Dev/tools/dev/lib/tools/macapp/swift-shared/vendor-lifecycle.py")
 
 

@@ -34,7 +34,7 @@ if [ "${1:-}" = '--test-only' ]; then exit 0; fi
 
 # The shared settings/update sources are vendored byte-for-byte; edit them only at their origin.
 LIFECYCLE_VENDOR="${APP_LIFECYCLE_VENDOR:-$HOME/Dev/tools/dev/lib/tools/macapp/swift-shared/vendor-lifecycle.py}"
-if [ -f "$LIFECYCLE_VENDOR" ]; then python3 "$LIFECYCLE_VENDOR" --platform mac --target-source-dir "$PWD/Sources"; fi
+if [ -f "$LIFECYCLE_VENDOR" ]; then python3 "$LIFECYCLE_VENDOR" --platform mac --cli --target-source-dir "$PWD/Sources"; fi
 # Same for the quiet-launch contract the measurement tools use (-lane_quiet, the lane-ready log line).
 LANE_SIGNAL="${LANE_SIGNAL_SOURCE:-$HOME/Dev/tools/dev/lib/tools/macapp/swift-shared/LaneSignal.swift}"
 if [ -f "$LANE_SIGNAL" ] && ! cmp -s "$LANE_SIGNAL" Sources/LaneSignal.swift; then cp "$LANE_SIGNAL" Sources/LaneSignal.swift; fi
