@@ -411,7 +411,7 @@ final class Coordinator: NSObject {
         AppLifecycleUI.shared.productGroups = { [weak product] in product?.groups() ?? [] }
         AppLifecycleUI.shared.willShow = { [weak product] in product?.refresh() }
         AppLifecycleUI.shared.canInstallUpdate = { [weak self] in self?.panelActive != true }
-        AppLifecycleUI.install(name: Env.productName, configuration: configuration, updateSource: UpdateChannel.current.updateSource)
+        AppLifecycleUI.install(name: Env.productName, configuration: configuration, updateSource: BasicsTestMode.updateSource)
         #endif
     }
 

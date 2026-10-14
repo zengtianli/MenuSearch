@@ -89,7 +89,8 @@ enum CLI {
         #if !APP_STORE
         if arguments.first == "update", let sub = arguments.dropFirst().first, ["check", "options", "install"].contains(sub) {
             let writesOptions = sub == "options" && arguments.contains("--yes") && !arguments.contains("--dry-run")
-            if Env.isolated && (sub != "options" || writesOptions) && !arguments.contains("--help") && !arguments.contains("-h") {
+            if Env.isolated && (sub != "options" || writesOptions) && !BasicsTestMode.allowsUpdate(arguments)
+                && !arguments.contains("--help") && !arguments.contains("-h") {
                 return fail(isolationRefusal, json: arguments.contains("--json"))
             }
             return AppLifecycleCLI.run(arguments, product: lifecycleProduct())
@@ -319,7 +320,7 @@ enum CLI {
         #if APP_STORE
         let source: AppUpdateSource = .appStore
         #else
-        let source = UpdateChannel.current.updateSource
+        let source = BasicsTestMode.updateSource
         #endif
         var product = AppLifecycleCLI.Product(command: "menusearch", name: Env.productName,
                                              configuration: configuration(), updateSource: source, windowEntry: "设置…")

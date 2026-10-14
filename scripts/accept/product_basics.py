@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Chapter basics for the installed MenuSearch: real offscreen UI and private CLI fixtures; never build/install."""
 import hashlib
+import argparse
 import json
 import os
 from pathlib import Path
@@ -40,6 +41,15 @@ def production_snapshot():
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--app', type=Path, default=os.environ.get('MENUSEARCH_BASICS_APP', str(APP)))
+    parser.add_argument('--receipt', type=Path, default=os.environ.get('MENUSEARCH_BASICS_RECEIPT', str(ROOT / 'perf/build-receipt.json')))
+    args = parser.parse_args()
+    selected_app = Path(args.app).resolve()
+    receipt_path = Path(args.receipt).resolve()
+    candidate = selected_app != APP.resolve()
+    if candidate and (not selected_app.is_relative_to(ROOT / 'build') or not receipt_path.is_relative_to(ROOT / 'build/accept')):
+        raise ValueError('Candidates and their receipts must be under this product build/ and build/accept/')
     spec = json.loads(os.environ['SOP_PRODUCT_BASICS_SPEC'])
     app_id = os.environ['SOP_APP_ID']
     out = Path(os.environ['SOP_OUT_DIR']).resolve()
@@ -51,18 +61,19 @@ def main():
     cases = []
     missing = {key: [] for key in FEATURES}
     before = production_snapshot()
-    receipt_path = ROOT / 'perf/build-receipt.json'
     receipt = json.loads(receipt_path.read_text())
     artifact = receipt['artifact']
-    installed_info = plistlib.loads((APP / 'Contents/Info.plist').read_bytes())
-    installed_sha = sha(APP / artifact['executable'])
+    installed_info = plistlib.loads((selected_app / 'Contents/Info.plist').read_bytes())
+    installed_sha = sha(selected_app / artifact['executable'])
     source_files = receipt['source']['files']
     source_mismatches = [name for name, checksum in source_files.items()
                          if not (ROOT / name).is_file() or sha(ROOT / name) != checksum]
     current_inputs = input_files(receipt['source']['input_globs'])
     source_mismatches.extend('unrecorded:' + name for name in sorted(current_inputs - set(source_files)))
     source_mismatches.extend('missing:' + name for name in sorted(set(source_files) - current_inputs))
-    binding = {'installed_path': str(APP), 'bundle_id': installed_info['CFBundleIdentifier'],
+    binding = {'validation_scope': 'candidate' if candidate else 'installed', 'artifact_path': str(selected_app),
+               'receipt_path': str(receipt_path), 'installed_path': str(APP), 'installed_executable_sha256': before['executable_sha256'],
+               'bundle_id': installed_info['CFBundleIdentifier'],
                'version': installed_info['CFBundleShortVersionString'], 'build': installed_info['CFBundleVersion'],
                'executable_sha256': installed_sha, 'receipt_sha256': sha(receipt_path),
                'source_sha256': receipt['source']['sha256'], 'source_files': source_files,
@@ -85,7 +96,7 @@ def main():
     try:
         if not bound:
             raise ValueError('Installed executable/version or current source does not match its build receipt; no rebuild attempted')
-        shutil.copytree(APP, clone, symlinks=True)
+        shutil.copytree(selected_app, clone, symlinks=True)
         binding['copy_before_sign_sha256'] = sha(executable)
         for feature in FEATURES:
             checks[feature][feature + '.copied_installed_binary'] = sha(executable) == installed_sha
@@ -102,7 +113,8 @@ def main():
         home.mkdir()
         env = {**os.environ, 'HOME': str(home), 'CFFIXED_USER_HOME': str(home),
                'APP_LIFECYCLE_SUPPORT_DIR': str(run / 'lifecycle'),
-               'APP_LIFECYCLE_CLOUD_DIR': str(run / 'cloud'), 'APP_LIFECYCLE_NO_RELAUNCH': '1'}
+               'APP_LIFECYCLE_CLOUD_DIR': str(run / 'cloud'), 'APP_LIFECYCLE_NO_RELAUNCH': '1',
+               'MENUSEARCH_BASICS_ROOT': str(run)}
         # Product isolation blocks cloud/update mutations. A renamed copy plus a validated private home lets
         # the real shared CLI exercise fixtures without entering the user's support directory or preference domain.
         env.pop('MENUSEARCH_SUPPORT_DIR', None)
@@ -156,6 +168,9 @@ def main():
                    and ui.get('version') == artifact['version'] and str(ui.get('build')) == str(artifact['build']))
         for feature in FEATURES:
             checks[feature][feature + '.offscreen_installed_self_test'] = safe_ui is True
+        for name in ('updates_ui_missing_feed_error', 'updates_ui_corrupt_feed_error', 'updates_ui_valid_feed_recovers',
+                     'updates_ui_get_version_entry', 'updates_ui_preserves_configuration', 'updates_ui_actual_views_rendered'):
+            checks['updates']['updates.' + name] = (ui.get('checks') or {}).get(name) is True
 
         call('settings', 'save', ['config', 'set', 'hotkey', 'alt+m'], lambda b: b.get('ok') is True, isolated=True)
         call('settings', 'fresh_process_readback', ['config', 'get'],
@@ -213,22 +228,48 @@ def main():
         call('icloud', 'finish_disabled', ['config', 'sync', 'off', '--yes'], lambda b: b.get('sync_enabled') is False)
 
         call('updates', 'save_options', ['update', 'options', '--auto-check', 'on', '--interval', '6', '--yes'],
-             lambda b: b.get('options', {}).get('automaticCheck') is True and b.get('options', {}).get('intervalHours') == 6)
+             lambda b: b.get('options', {}).get('automaticCheck') is True and b.get('options', {}).get('intervalHours') == 6, isolated=True)
         options = call('updates', 'fresh_options_readback', ['update', 'options'],
-                       lambda b: b.get('options', {}).get('automaticCheck') is True and b.get('options', {}).get('intervalHours') == 6)
+                       lambda b: b.get('options', {}).get('automaticCheck') is True and b.get('options', {}).get('intervalHours') == 6, isolated=True)
         call('updates', 'invalid_interval_refused', ['update', 'options', '--interval', '0', '--yes'],
-             lambda b: b.get('error', {}).get('code') == 'usage', 2)
-        call('updates', 'invalid_options_preserve_previous', ['update', 'options'], lambda b: b.get('options') == options.get('options'))
+             lambda b: b.get('error', {}).get('code') == 'usage', 2, True)
+        call('updates', 'invalid_options_preserve_previous', ['update', 'options'], lambda b: b.get('options') == options.get('options'), isolated=True)
         call('updates', 'disable_auto_check', ['update', 'options', '--auto-check', 'off', '--yes'],
-             lambda b: b.get('options', {}).get('automaticCheck') is False)
-        # There is no injectable test update source in the installed product's public CLI. An isolation refusal
-        # is evidence of a safe boundary, not evidence that the updater checked a fixture or recovered from it.
-        call('updates', 'isolated_check_refused_safely', ['update', 'check'],
+             lambda b: b.get('options', {}).get('automaticCheck') is False, isolated=True)
+        feed = run / 'cloud/TianliApps/Updates' / identity / 'basics-test/release.json'
+        feed.parent.mkdir(parents=True, exist_ok=True)
+        feed.unlink(missing_ok=True)
+        selected_before = settings_path.read_bytes()
+        call('updates', 'missing_feed_error', ['update', 'check'], lambda b: b.get('error', {}).get('code') == 'check_incomplete', 1, True)
+        feed.write_text('{broken')
+        call('updates', 'corrupt_feed_error', ['update', 'check'], lambda b: b.get('error', {}).get('code') == 'check_incomplete', 1, True)
+        asset = feed.parent / 'check-only.zip'
+        # A genuine local file/hash for release parsing; preview is the real updater's no-install operation.
+        asset.write_text('Local release-check asset, never installed\n')
+        release = {'version': artifact['version'], 'build': str(int(artifact['build']) + 1), 'bundle_id': identity,
+                   'channel': 'basics-test', 'filename': asset.name, 'sha256': sha(asset), 'size_bytes': asset.stat().st_size,
+                   'installation': 'bundle'}
+        write(feed, release)
+        call('updates', 'test_source_checked', ['update', 'check'],
+             lambda b: b.get('update_available') is True and b.get('current') == {'version': artifact['version'], 'build': str(artifact['build'])}
+             and b.get('upgrade', {}).get('in_app') is True and b.get('upgrade', {}).get('command') == 'menusearch update install --yes', isolated=True)
+        call('updates', 'preview_no_install', ['update', 'install', '--dry-run'],
+             lambda b: b.get('installed') is False and b.get('dry_run') is True, isolated=True)
+        checks['updates']['updates.bad_feed_recovery'] = all(checks['updates'].get('updates.' + name) is True
+            for name in ('missing_feed_error', 'corrupt_feed_error', 'test_source_checked', 'updates_ui_valid_feed_recovers'))
+        checks['updates']['updates.preview_preserves_data'] = settings_path.read_bytes() == selected_before and sha(selected_app / artifact['executable']) == installed_sha
+        call('updates', 'real_install_refused_in_fixture', ['update', 'install', '--yes'],
              lambda b: b.get('ok') is False and '隔离' in str(b.get('error')), 1, True)
-        checks['updates']['updates.test_source_checked'] = False
-        checks['updates']['updates.bad_feed_recovery'] = False
-        checks['updates']['updates.upgrade_preserves_data'] = False
-        missing['updates'].append('Installed CLI fixes the update source to GitHub and rejects checks in product isolation; no safe test-feed/failed-upgrade entry is exposed. Source work is outside this task.')
+        unsafe_env = {**env, 'MENUSEARCH_SUPPORT_DIR': str(settings_path.parent)}
+        blocked = subprocess.run([str(selected_app / artifact['executable']), 'update', 'options', '--auto-check', 'on', '--yes', '--json'],
+                                 env=unsafe_env, capture_output=True, text=True, timeout=10)
+        checks['updates']['updates.production_identity_cannot_enable_fixture'] = blocked.returncode == 1 and json.loads(blocked.stdout).get('ok') is False
+        call('updates', 'missing_test_root_refused', ['update', 'check'],
+             lambda b: b.get('ok') is False and '隔离' in str(b.get('error')), 1, True,
+             override={'MENUSEARCH_BASICS_ROOT': ''})
+        call('updates', 'escaping_cloud_path_refused', ['update', 'check'],
+             lambda b: b.get('ok') is False and '隔离' in str(b.get('error')), 1, True,
+             override={'APP_LIFECYCLE_CLOUD_DIR': '/'})
     except Exception as caught:
         error = str(caught)
         for feature in FEATURES:
@@ -262,7 +303,7 @@ def main():
             'check_result': ['test_source_checked'],
             'failure_recovery': ['bad_feed_recovery'],
             'options_or_store_entry': ['save_options', 'fresh_options_readback', 'invalid_options_preserve_previous'],
-            'data_preservation': ['upgrade_preserves_data']}}
+            'data_preservation': ['preview_no_install', 'preview_preserves_data', 'updates_ui_preserves_configuration', 'real_install_refused_in_fixture']}}
     for feature, groups in scenarios.items():
         for scenario, observations in groups.items():
             checks[feature][feature + '.' + scenario] = all(
@@ -273,17 +314,17 @@ def main():
                 missing[feature].append('No actual acceptance path for newly required scenario: ' + required)
     for feature in FEATURES:
         checks[feature][feature + '.production_unchanged'] = before == after
-        checks[feature][feature + '.binding_still_current'] = (sha(APP / artifact['executable']) == installed_sha
+        checks[feature][feature + '.binding_still_current'] = (sha(selected_app / artifact['executable']) == installed_sha
             and sha(receipt_path) == binding['receipt_sha256']
             and input_files(receipt['source']['input_globs']) == set(source_files)
             and all((ROOT / name).is_file() and sha(ROOT / name) == checksum for name, checksum in source_files.items()))
     upstream = {'path': str((ui_dir / 'self-test.json').relative_to(ROOT)),
                 'sha256': sha(ui_dir / 'self-test.json')} if (ui_dir / 'self-test.json').is_file() else None
     features = {}
-    scope = ('Installed download edition, copied without recompilation and re-signed only for a disposable identity; '
+    scope = (('Candidate' if candidate else 'Installed') + ' download edition, copied without recompilation and re-signed only for a disposable identity; '
              'real offscreen views/recording callbacks and isolated CLI persistence. Shortcut delivery uses no synthetic input '
              'and no real global registration. iCloud is the shared production sync engine using a private local cloud fixture; '
-             'Apple server transfer between devices is not tested. Update options are real; test-feed and upgrade recovery are unavailable.')
+             'Apple server transfer between devices is not tested. Update UI/CLI checks a real private feed and exercises failure recovery and no-install preview; no actual app replacement.')
     for feature in FEATURES:
         raw_path = run / (feature + '.json')
         raw = {'schema_version': 1, 'app_id': app_id, 'spec_digest': spec['digest'],
@@ -298,7 +339,7 @@ def main():
     passed = all(feature['result'] == 'passed' for feature in features.values())
     counts = {feature: f"{sum(value is True for value in checks[feature].values())}/{len(checks[feature])}" for feature in FEATURES}
     detail = {'schema_version': 1, 'app_id': app_id, 'spec_digest': spec['digest'], 'features': features,
-              'summary': f"当前装机 {binding['version']} ({binding['build']})：" + '；'.join(f'{feature} {counts[feature]}' for feature in FEATURES),
+              'summary': f"{'候选' if candidate else '当前装机'} {binding['version']} ({binding['build']})：" + '；'.join(f'{feature} {counts[feature]}' for feature in FEATURES),
               'scope': scope, 'run': str(run.relative_to(ROOT))}
     write(out / 'product_basics.detail.json', detail)
     print(detail['summary'], flush=True)

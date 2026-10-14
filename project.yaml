@@ -58,6 +58,8 @@ sop:
         readback: menusearch update check --json；menusearch update options --json
     inputs:
     - scripts/accept/product_basics.py
+    - build/accept/product-basics-candidate/build-receipt.json
+    - build/accept/product-basics-candidate/MenuSearch.app/Contents/MacOS/MenuSearch
     - perf/build-receipt.json
     - Sources/**
     - Resources/**

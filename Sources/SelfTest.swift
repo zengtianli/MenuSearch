@@ -1,4 +1,5 @@
 import AppKit
+import CryptoKit
 
 /// `MenuSearch --self-test --output DIR [--pid N]`: the production panel, settings window, shortcut and mode logic,
 /// control socket and stores, run offscreen in an isolated support directory. Nothing is shown, no key is
@@ -70,6 +71,7 @@ enum SelfTest {
             try Env.ensureSupportDirectory()
             try panelChecks(&checks, &metrics, &notes, out: out, realPID: realPID)
             try logicChecks(&checks, out: out)
+            if BasicsTestMode.enabled { try updateChecks(&checks, out: out) }
         } catch { failure = error.localizedDescription }
         checks["never_on_screen"] = !NSApp.isActive && NSApp.windows.allSatisfy { !$0.isVisible }
         let passed = failure.isEmpty && !checks.isEmpty && checks.values.allSatisfy { $0 }
@@ -82,6 +84,56 @@ enum SelfTest {
             print(String(decoding: data, as: UTF8.self))
         }
         exit(passed ? 0 : 1)
+    }
+
+    /// Executes the shared production updater and its actual native views; only a verified private fixture identity.
+    private static func updateChecks(_ checks: inout [String: Bool], out: URL) throws {
+        let identity = Bundle.main.bundleIdentifier!
+        let directory = try AppUpdateChecker.privateDirectory(bundleID: identity, channel: BasicsTestMode.channel)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let feed = directory.appendingPathComponent("release.json")
+        let asset = directory.appendingPathComponent("check-only.zip")
+        try Data("Local release check fixture; never installed".utf8).write(to: asset)
+        var options = AppUpdatePreferences.options(identity)
+        options.automaticCheck = false; options.automaticDownload = false; options.automaticInstall = false
+        try AppUpdatePreferences.save(options, identity)
+        let before = try Data(contentsOf: Env.settingsURL)
+        func texts(_ view: NSView) -> [String] {
+            let own = (view as? NSTextField).map { [$0.stringValue] } ?? (view as? NSButton).map { [$0.title] } ?? []
+            return own + view.subviews.flatMap(texts)
+        }
+        func check(_ key: String, contains expected: String) {
+            let started = Date().timeIntervalSince1970
+            AppLifecycleUI.shared.checkForUpdates(present: false)
+            let deadline = Date().addingTimeInterval(5)
+            var observed = false
+            while Date() < deadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.02))
+                let state = AppUpdatePreferences.status(identity, source: BasicsTestMode.updateSource)["history"] as? [String: Any] ?? [:]
+                let attempted = (state["last_attempt_at"] as? Double ?? 0) >= started
+                let labels = NSApp.windows.flatMap { $0.contentView.map(texts) ?? [] }
+                if attempted && labels.contains(where: { $0.contains(expected) }) { observed = true; break }
+            }
+            checks[key] = observed && NSApp.windows.allSatisfy { !$0.isVisible } && NSApp.activationPolicy() == .prohibited
+        }
+        try? FileManager.default.removeItem(at: feed)
+        check("updates_ui_missing_feed_error", contains: "检查未完成")
+        try Data("{broken".utf8).write(to: feed)
+        check("updates_ui_corrupt_feed_error", contains: "检查未完成")
+        let release: [String: Any] = ["version": Env.version, "build": String((Int(Env.build) ?? 0) + 1),
+            "bundle_id": identity, "channel": BasicsTestMode.channel, "filename": asset.lastPathComponent,
+            "sha256": SHA256.hash(data: try Data(contentsOf: asset)).map { String(format: "%02x", $0) }.joined(), "installation": "bundle"]
+        try JSONSerialization.data(withJSONObject: release).write(to: feed)
+        check("updates_ui_valid_feed_recovers", contains: "有新版")
+        func hasUpgrade(_ view: NSView) -> Bool {
+            if let button = view as? NSButton, button.title == "升级到新版…", !button.isHidden, button.isEnabled { return true }
+            return view.subviews.contains(where: hasUpgrade)
+        }
+        checks["updates_ui_get_version_entry"] = NSApp.windows.contains { $0.contentView.map(hasUpgrade) ?? false }
+        checks["updates_ui_preserves_configuration"] = try Data(contentsOf: Env.settingsURL) == before
+        let rendered = try AppLifecycleUI.shared.offscreenSnapshot(to: out.appendingPathComponent("updates-checked.png"), showingUpdateOptions: true)
+        checks["updates_ui_actual_views_rendered"] = !rendered.isEmpty && rendered.values.allSatisfy { $0 }
+        NSApp.dockTile.badgeLabel = nil
     }
 
     /// `MenuSearch --site-shots --output DIR`: the product page's screenshots, rendered offscreen from the production
