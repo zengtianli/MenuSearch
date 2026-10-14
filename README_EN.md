@@ -124,12 +124,15 @@ The few values that follow macOS rather than this app (which top-level menus bel
 <sub>v0.3.0 (8) · Mac16,12 / Apple M4 / macOS 27.2 · Sampled while resident in built-in shortcut mode with the panel closed; the time from key press to the complete list is recorded by the app in last_show of menusearch status. · measured 2026-10-07. Measured on the listed version and device; the current version and measurement scope are described on this page. Memory uses phys_footprint; CPU is CPU time ÷ wall time over a 60-second sampling window; sizes in decimal MB. Raw data: [perf/lightweight.json](perf/lightweight.json).</sub>
 <!-- lightweight:end -->
 
+These are historical measurements of v0.3.0 (8). Resource measurements of v0.3.1 (10) are pending.
+
 The numbers above are written from the measurement file. Two more: filtering while typing in 1000 commands has a P95 of about 14–33 ms (rendered in the background, including list reload and layout, varying with machine load); reading one app's menu takes about 40–76 ms for Finder (201 items), 28–43 ms for WeChat (92), 149–206 ms for Chrome (750) and 307–536 ms for Safari (577, depending on its state). In external mode no process of this app remains after the panel closes. The time from pressing the shortcut to the complete list is recorded for every summon in `last_show` of `menusearch status`.
 
 ## What has been verified
 
 | Layer | State |
 | --- | --- |
+| 0.3.1 (10) incremental validation | 92 offscreen checks and 19 isolated real-binary CLI regressions passed; local installation and retained settings verified. Not yet notarized or publicly released |
 | Logic tests and the background self-test (production panel, settings window, mode and shortcut transactions, control socket, configuration transfer) | Run on every build; a failure produces no app. Key guards were reverse-validated (breaking each makes the self-test fail) |
 | Fixed acceptance checks: functionality / recovery / privacy / native_ui | Pass (isolated directory, nothing on screen): `python3 scripts/accept/run.py <check>` |
 | Signature, notarization, reading the release packages back | Checked for every release by `scripts/release.py`: the app inside both the ZIP and the DMG passes Gatekeeper and matches the build record |

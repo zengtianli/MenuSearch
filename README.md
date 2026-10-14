@@ -126,12 +126,15 @@ mkdir -p ~/.local/bin && ln -s /Applications/MenuSearch.app/Contents/MacOS/MenuS
 <sub>v0.3.0 (8) · Mac16,12 / Apple M4 / macOS 27.2 · 内置快捷键方式常驻、面板未显示时采样；按下快捷键到完整结果的耗时由 App 记录在 menusearch status 的 last_show。 · 2026-10-07。数字来自所列版本与设备的测量记录；当前版本与测量范围以本页说明为准。内存口径为 phys_footprint；CPU 为 60 秒采样窗内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
 <!-- lightweight:end -->
 
+此处保留 v0.3.0 (8) 的历史实测，v0.3.1 (10) 的资源数字待采样。
+
 上面这组数字由实测文件自动写入。另外两项：在 1000 条命令里边打字边过滤，P95 约 14–33 ms（后台渲染，含列表重载与布局，随机器负载变化）；读取一个 App 的菜单，Finder 201 条约 40–76 ms、微信 92 条约 28–43 ms、Chrome 750 条约 149–206 ms、Safari 577 条约 307–536 ms（随它当时的状态变化）。外部呼出方式下面板关闭后没有本 App 的进程。「按下快捷键到面板出现完整结果」每次都记在 `menusearch status` 的 `last_show` 里。
 
 ## 验证到哪一层
 
 | 层 | 状态 |
 | --- | --- |
+| 0.3.1 (10) 增量验证 | 92 项离屏自检、19 项真实二进制隔离 CLI 回归通过，已完成本机快装与配置保留回读；尚未公证或公开发行 |
 | 逻辑测试、后台自检（生产面板、设置窗口、方式与快捷键事务、控制通道、配置迁移） | 每次构建都跑，失败就不产出 App；关键保护做过反向验证（改坏后自检失败） |
 | 固定验收 functionality / recovery / privacy / native_ui | 通过（隔离目录，不上屏）：`python3 scripts/accept/run.py <项>` |
 | 签名、公证、发行包回读 | 每个发行版由 `scripts/release.py` 核对：ZIP 与 DMG 里的 App 都过 Gatekeeper，可执行文件与构建记录一致 |
