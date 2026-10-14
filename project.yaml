@@ -41,9 +41,31 @@ sop:
   test: bash build.sh --test-only
   test_inputs:
   - Tests/**
+  product_basics:
+    schema_version: 1
+    features:
+      settings:
+        entry: 主菜单与菜单栏「设置…」，原生设置窗口支持录键及配置导入/导出
+        readback: menusearch config get --json；menusearch config status --json
+      shortcuts:
+        entry: 设置里的快捷键录制/清除；搜索面板方向键、回车和 Escape
+        readback: menusearch config get --json；已装包 --self-test 的真实动作与冲突回滚检查
+      icloud:
+        entry: 设置「使用 iCloud 记住配置」，默认关闭，沿用系统同步
+        readback: menusearch config status --json；menusearch config sync on|off --yes
+      updates:
+        entry: 主菜单与设置里的检查更新/获取新版，含更新选项
+        readback: menusearch update check --json；menusearch update options --json
+    inputs:
+    - scripts/accept/product_basics.py
+    - perf/build-receipt.json
+    - Sources/**
+    - Resources/**
+    - Info.plist
   # 固定验收：当前源码临时 ad-hoc 构建到 build/accept/<源码哈希>/（含逻辑测试与离屏自检），隔离目录驱动同一可执行文件；
   # 不碰装机版、使用者的设置、真实快捷键、登录项和其他 App 的菜单，不上屏。
   accept:
+    product_basics: python3 scripts/accept/product_basics.py
     functionality: python3 scripts/accept/run.py functionality
     recovery: python3 scripts/accept/run.py recovery
     privacy: python3 scripts/accept/run.py privacy
