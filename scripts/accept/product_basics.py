@@ -83,7 +83,7 @@ def main():
              and str(installed_info['CFBundleVersion']) == str(artifact['build'])
              and installed_sha == artifact['sha256'] and not source_mismatches)
     for feature in FEATURES:
-        checks[feature][feature + '.installed_and_source_binding'] = bound is True
+        checks[feature][feature + '.artifact_and_source_binding'] = bound is True
 
     identity = 'test.tianli.menusearch.basics.' + uuid.uuid4().hex
     clone = run / 'MenuSearch.app'
@@ -99,7 +99,7 @@ def main():
         shutil.copytree(selected_app, clone, symlinks=True)
         binding['copy_before_sign_sha256'] = sha(executable)
         for feature in FEATURES:
-            checks[feature][feature + '.copied_installed_binary'] = sha(executable) == installed_sha
+            checks[feature][feature + '.copied_bound_binary'] = sha(executable) == installed_sha
         info_path = clone / 'Contents/Info.plist'
         info = plistlib.loads(info_path.read_bytes())
         info['CFBundleIdentifier'] = identity
@@ -167,7 +167,7 @@ def main():
         safe_ui = ((ui.get('checks') or {}).get('never_on_screen') is True and ui.get('external_actions') == 0
                    and ui.get('version') == artifact['version'] and str(ui.get('build')) == str(artifact['build']))
         for feature in FEATURES:
-            checks[feature][feature + '.offscreen_installed_self_test'] = safe_ui is True
+            checks[feature][feature + '.offscreen_bound_self_test'] = safe_ui is True
         for name in ('updates_ui_missing_feed_error', 'updates_ui_corrupt_feed_error', 'updates_ui_valid_feed_recovers',
                      'updates_ui_get_version_entry', 'updates_ui_preserves_configuration', 'updates_ui_actual_views_rendered'):
             checks['updates']['updates.' + name] = (ui.get('checks') or {}).get(name) is True
@@ -286,7 +286,7 @@ def main():
     # Canonical policy scenarios are derived from concrete observations, never from registration/source presence.
     scenarios = {
         'settings': {
-            'interaction': ['settings_record_applies', 'settings_reflect_state', 'offscreen_installed_self_test'],
+            'interaction': ['settings_record_applies', 'settings_reflect_state', 'offscreen_bound_self_test'],
             'persisted_readback': ['save', 'fresh_process_readback', 'import'],
             'error_preserves_data': ['bad_value_refused', 'invalid_input_preserves_file', 'config_wrong_field_import_is_atomic']},
         'shortcuts': {

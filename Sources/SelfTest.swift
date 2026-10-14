@@ -97,7 +97,8 @@ enum SelfTest {
         var options = AppUpdatePreferences.options(identity)
         options.automaticCheck = false; options.automaticDownload = false; options.automaticInstall = false
         try AppUpdatePreferences.save(options, identity)
-        let before = try Data(contentsOf: Env.settingsURL)
+        let settingsURL = Env.supportDirectory.appendingPathComponent("lifecycle/settings.json")
+        let before = try Data(contentsOf: settingsURL)
         func texts(_ view: NSView) -> [String] {
             let own = (view as? NSTextField).map { [$0.stringValue] } ?? (view as? NSButton).map { [$0.title] } ?? []
             return own + view.subviews.flatMap(texts)
@@ -130,7 +131,7 @@ enum SelfTest {
             return view.subviews.contains(where: hasUpgrade)
         }
         checks["updates_ui_get_version_entry"] = NSApp.windows.contains { $0.contentView.map(hasUpgrade) ?? false }
-        checks["updates_ui_preserves_configuration"] = try Data(contentsOf: Env.settingsURL) == before
+        checks["updates_ui_preserves_configuration"] = try Data(contentsOf: settingsURL) == before
         let rendered = try AppLifecycleUI.shared.offscreenSnapshot(to: out.appendingPathComponent("updates-checked.png"), showingUpdateOptions: true)
         checks["updates_ui_actual_views_rendered"] = !rendered.isEmpty && rendered.values.allSatisfy { $0 }
         NSApp.dockTile.badgeLabel = nil
