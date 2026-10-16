@@ -1,24 +1,24 @@
 {
-  "version": "0.3.0",
-  "build": "8",
-  "filename": "MenuSearch-0.3.0-arm64.zip",
-  "sha256": "a50a00eab1170f63dc25078bd6f8990b3e63158f44e17d419f4dcf64ac993e14",
-  "bytes": 1653518,
-  "download_url": "https://github.com/zengtianli/MenuSearch/releases/download/v0.3.0/MenuSearch-0.3.0-arm64.zip",
+  "version": "0.3.3",
+  "build": "12",
+  "filename": "MenuSearch-0.3.3-arm64.zip",
+  "sha256": "c13cac7edcf374556d58770056366aa6e5959409d64b6f6570f63d45139e7b6b",
+  "bytes": 1757775,
+  "download_url": "https://github.com/zengtianli/MenuSearch/releases/download/v0.3.3/MenuSearch-0.3.3-arm64.zip",
   "notarized": true,
-  "notarization_id": "d835d1e6-424c-43ae-91b2-50fc7c3489c7",
+  "notarization_id": "90699f03-1782-4076-bfa2-cc31eaeb3d50",
   "minimum_macos": "14.0",
   "architecture": "arm64",
   "signing": "Developer ID Application with hardened runtime",
   "dmg": {
-    "filename": "MenuSearch-0.3.0-arm64.dmg",
-    "sha256": "d83e67306acf76ae3b366aa453045c6e0ba496516dc22323b2f5c98535ad4777",
-    "bytes": 2033966,
-    "download_url": "https://github.com/zengtianli/MenuSearch/releases/download/v0.3.0/MenuSearch-0.3.0-arm64.dmg",
-    "notarization_id": "e69d84ae-d0bf-4cdf-9ebc-2c7f6cd14151"
+    "filename": "MenuSearch-0.3.3-arm64.dmg",
+    "sha256": "82f75e4c860628f60781030255136bd8a06cd2d0261f6ed2b9386f934366fc36",
+    "bytes": 2157722,
+    "download_url": "https://github.com/zengtianli/MenuSearch/releases/download/v0.3.3/MenuSearch-0.3.3-arm64.dmg",
+    "notarization_id": "dbcb85d8-c463-4276-a445-d181b084f3a6"
   },
-  "source_commit": "918534716bb2ad2fcfb273c9eddad34c13f9188a",
-  "source_sha256": "6806a27bae3b9ad44120298435359177a44ea807346868750382a6d77c62e549",
-  "executable_sha256": "ff699e95d8c6253c9c9b543c83e47573e9a8bf82dd09c725742a1ba1535ddf89",
-  "packaged_at": "2026-10-06T17:27:25+00:00"
+  "source_commit": "9af102d1351d46b4e91c0acea2008b6f9173ae65",
+  "source_sha256": "5721589509644b45861eea6078882392d3945b8b3203c712e87293fb31f7837d",
+  "executable_sha256": "dae2cc8a7464bbf8ff2a48a86be7cb17b3f03fc1037ea3f4286e5c8b70825fc7",
+  "packaged_at": "2026-10-16T08:30:04+00:00"
 }

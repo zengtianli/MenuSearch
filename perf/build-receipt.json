@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "built_at": "2026-10-15T00:42:35+08:00",
+  "built_at": "2026-10-16T16:28:12+08:00",
   "artifact": {
     "bundle_id": "cyou.tianli.menusearch",
-    "version": "0.3.2",
-    "build": "11",
+    "version": "0.3.3",
+    "build": "12",
     "executable": "Contents/MacOS/MenuSearch",
-    "sha256": "9c3c82d2bcb98f3912949c60ea62670677af64e695cdbc4cf5301d17d7ea8f5e",
+    "sha256": "dae2cc8a7464bbf8ff2a48a86be7cb17b3f03fc1037ea3f4286e5c8b70825fc7",
     "icon": {
       "path": "Contents/Resources/AppIcon.icns",
       "sha256": "188ed3f3db146a88a36dabf3bcc49dcec0f4eaa3b99a0c367be2c8940ddbeca4"
@@ -22,7 +22,7 @@
       "build.sh",
       "LICENSE"
     ],
-    "sha256": "14cad2aeb9caf9b92d44801e3abcf65bf7142b88d0c280e41434fd04e2a8373f",
+    "sha256": "5721589509644b45861eea6078882392d3945b8b3203c712e87293fb31f7837d",
     "file_count": 25,
     "files": {
       "Sources/SettingsUI.swift": "7b44d4a99f44afdde9a18c7a9b252fd5126517dd0c4087ea4cf158ae19546089",
@@ -46,14 +46,14 @@
       "Sources/Hotkey.swift": "36218764ab0afb88e21546535fc738a6975b3bdc372ccbb272bf4d616eb09cdf",
       "Resources/tuning.json": "f341cda1d90a0bfe4bad6f34e2f81a792f96167d8287910f505a2d7742ae1d7d",
       "Tests/main.swift": "22486224a8425ef3fb97a1fd350b5de934050f3382e38f3123b85f01f9a887b1",
-      "Info.plist": "c102fd794e4c9f174bb6f6fe5eee2cce3acc33d9983a32c708cf0c8cf2753099",
+      "Info.plist": "8c47188786eaa45701034f134c02bf28d1c87c4ce54d037be354c14aaf11d10c",
       "icon/AppIcon.icns": "188ed3f3db146a88a36dabf3bcc49dcec0f4eaa3b99a0c367be2c8940ddbeca4",
       "build.sh": "f7965a3137666d5553935c4480f367a5ab2d13060c7824a948c18a9637a9a245",
       "LICENSE": "32d956a78128aab2c92a84743d0762ad9ae831597a6099796526af7232dc25ad"
     },
-    "commit": "7f4287dd06da872f233d0d47bed09bbcb68d87c8",
+    "commit": "9af102d1351d46b4e91c0acea2008b6f9173ae65",
     "dirty_scope": "组件当前 Git 工作树；跨仓/软链输入的实际内容由 sha256 核验",
     "dirty": false
   },
-  "build_command_sha256": "6779b1655490d1e40115642174182ac7fd151618cd65d7fddd07dc5f4c038140"
+  "build_command_sha256": "a45262ba856da6ed928599ee156f1140b718f680b310f212ff724e6f62bb2076"
 }
