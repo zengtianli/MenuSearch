@@ -198,14 +198,26 @@ def privacy(cache, exe, box):
     checks["links_only_system_libraries"] = bool(libraries) and all(l.startswith(("/System/Library/", "/usr/lib/")) for l in libraries)
     own = {p.name: p.read_text() for p in ROOT.glob("Sources/*.swift") if p.name not in VENDORED}
     # The one network client is the shared update check (an HTTPS request to GitHub Releases). The product's own
-    # sources hold no client and no URL, and ask for a release in two places only: the `update` command and the
-    # upgrade the user starts. Nothing checks on a timer or at launch.
+    # sources hold no client and no URL. Legacy requests remain explicit; the shared settings updater may also
+    # check after the user opts in (off by default). The native self-test has one strictly isolated local fixture.
     network = [n for n, text in own.items() if re.search(r"URLSession|NWConnection|CFSocketStream|https?://", text)]
     checks["own_sources_have_no_network_client"] = not network
     asks = {n: len(re.findall(r"AppUpdateChecker\.check\(", text)) for n, text in own.items()}
     checks["update_is_asked_only_on_request"] = ({n: c for n, c in asks.items() if c} == {"App.swift": 1, "CLI.swift": 1}
                                                  and len(re.findall(r"\bstartUpgrade\(\)", own["App.swift"])) == 2
-                                                 and not any("checkForUpdates" in text for text in own.values()))
+                                                 and {n: text.count("checkForUpdates") for n, text in own.items()
+                                                      if "checkForUpdates" in text} == {"SelfTest.swift": 1}
+                                                 and 'if BasicsTestMode.enabled { try updateChecks(&checks, out: out) }' in own["SelfTest.swift"]
+                                                 and 'identity.hasPrefix("test.tianli.menusearch.basics.")' in own["BasicsTestMode.swift"]
+                                                 and 'guard Env.isolated' in own["BasicsTestMode.swift"])
+    options_code, options = box.json("update", "options")
+    checks["automatic_network_activity_requires_opt_in"] = (options_code == 0
+        and all(options.get("options", {}).get(key) is False
+                for key in ("automaticCheck", "automaticDownload", "automaticInstall"))
+        and not options.get("history"))
+    isolated_check_code, isolated_check = box.json("update", "check")
+    checks["shared_update_check_refuses_production_access_when_isolated"] = (
+        isolated_check_code == 1 and "隔离" in str(isolated_check.get("error", "")))
     code, refused = box.json("update")
     checks["isolated_update_stays_offline"] = code == 1 and "隔离" in refused.get("error", "")
     # A running copy holds no internet socket: started the way the measurement tools start it (a support directory
@@ -243,7 +255,8 @@ def privacy(cache, exe, box):
     report = self_test(cache)
     checks.update(named(report, ["close_releases_menu_data", "config_export_has_only_preferences", "socket_closed_is_silent", "never_on_screen"]))
     checks["self_test_made_no_external_action"] = report.get("external_actions") == 0
-    return checks, {"linked": [l.rsplit("/", 1)[-1] for l in libraries]}
+    return checks, {"linked": [l.rsplit("/", 1)[-1] for l in libraries],
+                    "update_options": options, "isolated_update_check": isolated_check}
 
 
 def png_size(path):
