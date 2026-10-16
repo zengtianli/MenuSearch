@@ -28,7 +28,9 @@ def write(path, body):
 
 def input_files(patterns):
     return {path.relative_to(ROOT).as_posix() for pattern in patterns
-            for path in ROOT.glob(pattern + '/*' if pattern.endswith('/**') else pattern) if path.is_file()}
+            for path in ROOT.glob(pattern + '/*' if pattern.endswith('/**') else pattern)
+            if path.is_file() and not path.relative_to(ROOT).as_posix().startswith(
+                ('Tests/', 'scripts/accept/', 'scripts/perf/', 'handoffs/', 'perf/'))}
 
 
 def production_snapshot():
@@ -65,7 +67,10 @@ def main():
     artifact = receipt['artifact']
     installed_info = plistlib.loads((selected_app / 'Contents/Info.plist').read_bytes())
     installed_sha = sha(selected_app / artifact['executable'])
-    source_files = receipt['source']['files']
+    # Test, acceptance and measurement inputs can change without changing the installed app.
+    # Apply the same production scope to recorded files and current inputs, including the final recheck.
+    source_files = {name: checksum for name, checksum in receipt['source']['files'].items()
+                    if not name.startswith(('Tests/', 'scripts/accept/', 'scripts/perf/', 'handoffs/', 'perf/'))}
     source_mismatches = [name for name, checksum in source_files.items()
                          if not (ROOT / name).is_file() or sha(ROOT / name) != checksum]
     current_inputs = input_files(receipt['source']['input_globs'])
