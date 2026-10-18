@@ -58,15 +58,15 @@ enum StoreSelfTest {
             coordinator.installSettingsWindow()
             let labels = try StoreSettingsUI.shared.offscreenSnapshot(to: probe.appendingPathComponent("settings.png"))
             checks["settings_rendered"] = try Data(contentsOf: probe.appendingPathComponent("settings.png")).count > 10_000
-            checks["settings_no_update_or_cli_controls"] = !labels.contains { $0.contains("检查更新") || $0.contains("升级到新版") || $0.contains("外部呼出") || $0.contains("拷贝命令") }
-            checks["settings_transfer_visible"] = labels.contains("导出配置…") && labels.contains("导入配置…")
-            checks["permission_guidance"] = labels.contains("辅助功能") && coordinator.productSettings?.accessButton.title.contains("系统设置") == true
+            checks["settings_no_update_or_cli_controls"] = !labels.contains { $0.contains("检查更新") || $0.contains("升级到新版") || $0.contains(String(localized: "外部呼出")) || $0.contains(String(localized: "拷贝命令")) }
+            checks["settings_transfer_visible"] = labels.contains(String(localized: "导出配置…")) && labels.contains(String(localized: "导入配置…"))
+            checks["permission_guidance"] = labels.contains(String(localized: "辅助功能")) && coordinator.productSettings?.accessButton.title == String(localized: "打开系统设置…")
             let command = MenuCommand(id: "fixture", title: "Export as PDF…", path: ["File", "Export as PDF…"], shortcut: "", enabled: true, checked: false)
             checks["core_menu_filter"] = MenuSearchIndex([command]).filter("exp pdf").first?.id == "fixture"
             let panel = PanelController(testing: true)
             // Invokes the production presentation directly, without changing TCC or scanning another app.
             panel.presentAccessibilityGuidance()
-            checks["missing_permission_is_not_empty_list"] = panel.message.stringValue.contains("辅助功能") && !panel.accessibilityButton.isHidden
+            checks["missing_permission_is_not_empty_list"] = panel.message.stringValue == MenuSearchError.accessibility.localizedMessage && !panel.accessibilityButton.isHidden
             panel.close()
             checks["bundled_tuning_read"] = Env.resourcesURL.map { FileManager.default.fileExists(atPath: $0.appendingPathComponent("tuning.json").path) } ?? false
         } catch let caught { error = caught.localizedDescription }

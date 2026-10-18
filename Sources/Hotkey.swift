@@ -54,7 +54,7 @@ final class GlobalHotkey: HotkeyRegistering {
 enum KeyConflicts {
     /// A shortcut macOS itself has enabled (Spotlight, Mission Control, screenshots…). Registering the same
     /// combination can succeed and still never arrive, so it is refused with the reason.
-    static func system(_ combo: Combo) -> String? {
+    static func system(_ combo: Combo) -> ProductError? {
         var list: Unmanaged<CFArray>?
         guard CopySymbolicHotKeys(&list) == noErr, let items = list?.takeRetainedValue() as? [[String: Any]] else { return nil }
         for item in items {
@@ -62,7 +62,7 @@ enum KeyConflicts {
                   let code = (item["kHISymbolicHotKeyCode"] as? NSNumber)?.uint32Value,
                   let modifiers = (item["kHISymbolicHotKeyModifiers"] as? NSNumber)?.uint32Value else { continue }
             if code == combo.keyCode && modifiers & 0x1B00 == combo.carbonModifiers {
-                return "\(combo.display) 已是 macOS 的系统快捷键（系统设置 › 键盘 › 键盘快捷键）。请换一个组合，或先在那里关闭它。"
+                return ProductError(localized: "\(combo.display) 已是 macOS 的系统快捷键（系统设置 › 键盘 › 键盘快捷键）。请换一个组合，或先在那里关闭它。")
             }
         }
         return nil
@@ -79,7 +79,7 @@ enum KeyConflicts {
     }
     static let registryFile = "menusearch.json"
 
-    static func registered(_ combo: Combo, in directory: URL? = registryDirectory) -> String? {
+    static func registered(_ combo: Combo, in directory: URL? = registryDirectory) -> ProductError? {
         guard let directory, let files = try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else { return nil }
         for file in files.sorted(by: { $0.path < $1.path }) where file.pathExtension == "json" && file.lastPathComponent != registryFile {
             guard let data = try? Data(contentsOf: file), data.count <= 1_048_576,
@@ -87,7 +87,13 @@ enum KeyConflicts {
             for row in rows where (row["mode"] as? String ?? "global") == "global" {
                 guard let key = row["key"] as? String, Combo(canonical: key) == combo else { continue }
                 let owner = row["component"] as? String ?? file.deletingPathExtension().lastPathComponent
-                return "键位登记里 \(owner) 也声明了 \(combo.display)（\(row["description"] as? String ?? "未说明")）。两边会同时响应，建议换一个。"
+                let missing = ProductError(localized: "未说明")
+                let description = row["description"] as? String
+                func problem(_ detail: String) -> ProductError {
+                    ProductError(localized: "键位登记里 \(owner) 也声明了 \(combo.display)（\(detail)）。两边会同时响应，建议换一个。")
+                }
+                return ProductError(problem(description ?? missing.message).message,
+                                    localizedMessage: problem(description ?? missing.localizedMessage).localizedMessage)
             }
         }
         return nil
@@ -96,7 +102,7 @@ enum KeyConflicts {
     /// A binding in skhd's own configuration, if skhd is used on this Mac. Read only: nothing there is ever changed.
     /// skhd intercepts keys with an event tap, which normally runs before a registered shortcut is delivered, so the
     /// same combination in both is expected not to arrive here. (Expected from how the two work; not measured.)
-    static func skhd(_ combo: Combo, files: [URL]? = nil) -> String? {
+    static func skhd(_ combo: Combo, files: [URL]? = nil) -> ProductError? {
         guard files != nil || !Env.isolated else { return nil }
         let home = FileManager.default.homeDirectoryForCurrentUser
         let names: [String: UInt32] = ["backspace": 51, "delete": 117]
@@ -122,7 +128,7 @@ enum KeyConflicts {
                 guard known, let code, Combo(keyCode: code, modifiers: modifiers) == combo else { continue }
                 let command = trimmed[trimmed.index(after: colon)...].trimmingCharacters(in: .whitespaces)
                 let shown = command.count > 60 ? String(command.prefix(60)) + "…" : command
-                return "skhd 也绑定了 \(combo.display)（\(shown)）。两边会抢同一个键，通常是 skhd 先拿走、这里收不到。可以改用「外部呼出」并让 skhd 运行 menusearch show，或换一个组合。"
+                return ProductError(localized: "skhd 也绑定了 \(combo.display)（\(shown)）。两边会抢同一个键，通常是 skhd 先拿走、这里收不到。可以改用「外部呼出」并让 skhd 运行 menusearch show，或换一个组合。")
             }
         }
         return nil
@@ -174,7 +180,7 @@ final class HotkeyRecorder: NSButton {
     }
     required init?(coder: NSCoder) { fatalError() }
 
-    private func refresh() { title = isRecording ? "请按快捷键…" : (combo?.display ?? "录制快捷键") }
+    private func refresh() { title = isRecording ? String(localized: "请按快捷键…") : (combo?.display ?? String(localized: "录制快捷键")) }
 
     @objc private func startRecording() {
         guard monitor == nil, let window, window.isVisible, window.isKeyWindow, NSApp.isActive else { return }

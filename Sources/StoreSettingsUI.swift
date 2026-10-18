@@ -73,16 +73,16 @@ final class StoreSettingsUI: NSObject {
         guard controller == nil, let product else { return }
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 600),
                               styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: true)
-        window.title = "\(Env.productName) 设置"; window.isReleasedWhenClosed = false
+        window.title = String(localized: "\(Env.productName) 设置"); window.isReleasedWhenClosed = false
         cloudToggle.target = self; cloudToggle.action = #selector(toggleCloud)
-        let export = NSButton(title: "导出配置…", target: self, action: #selector(exportConfiguration))
-        let load = NSButton(title: "导入配置…", target: self, action: #selector(importConfiguration))
+        let export = NSButton(title: String(localized: "导出配置…"), target: self, action: #selector(exportConfiguration))
+        let load = NSButton(title: String(localized: "导入配置…"), target: self, action: #selector(importConfiguration))
         let transfers = NSStackView(views: [export, load]); transfers.spacing = 8
-        let title = NSTextField(labelWithString: "\(Env.productName) · 版本 \(Env.version) (\(Env.build))")
+        let title = NSTextField(labelWithString: String(localized: "\(Env.productName) · 版本 \(Env.version) (\(Env.build))"))
         title.font = .systemFont(ofSize: 17, weight: .semibold)
-        let groups = product.groups() + [Self.group("配置", rows: [
-            Self.row("使用 iCloud 记住配置", detail: Self.detailLabel("使用系统 Apple 账户同步快捷键配置。辅助功能权限和登录项保留在本机。"), accessory: cloudToggle),
-            Self.row("导入与导出", detail: syncStatus, accessory: transfers)])]
+        let groups = product.groups() + [Self.group(String(localized: "配置"), rows: [
+            Self.row(String(localized: "使用 iCloud 记住配置"), detail: Self.detailLabel(String(localized: "使用系统 Apple 账户同步快捷键配置。辅助功能权限和登录项保留在本机。")), accessory: cloudToggle),
+            Self.row(String(localized: "导入与导出"), detail: syncStatus, accessory: transfers)])]
         let stack = NSStackView(views: [title] + groups)
         stack.orientation = .vertical; stack.alignment = .leading; stack.spacing = 18
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -117,8 +117,8 @@ final class StoreSettingsUI: NSObject {
         let panel = NSSavePanel(); panel.allowedContentTypes = [.json]; panel.nameFieldStringValue = "MenuSearch-settings.json"
         panel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
-            do { try Self.export(configuration, to: url); self?.syncStatus.stringValue = "配置已导出。" }
-            catch { self?.syncStatus.stringValue = "导出未完成：\(error.localizedDescription)" }
+            do { try Self.export(configuration, to: url); self?.syncStatus.stringValue = String(localized: "配置已导出。") }
+            catch { self?.syncStatus.stringValue = String(localized: "导出未完成：\(error.localizedDescription)") }
         }
     }
 
@@ -127,8 +127,8 @@ final class StoreSettingsUI: NSObject {
         let panel = NSOpenPanel(); panel.allowedContentTypes = [.json]; panel.allowsMultipleSelection = false
         panel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
-            do { try Self.load(configuration, from: url); self?.syncStatus.stringValue = "已导入；原配置已备份。商店版使用内置快捷键。" }
-            catch { self?.syncStatus.stringValue = "导入未完成：\(error.localizedDescription)" }
+            do { try Self.load(configuration, from: url); self?.syncStatus.stringValue = String(localized: "已导入；原配置已备份。商店版使用内置快捷键。") }
+            catch { self?.syncStatus.stringValue = String(localized: "导入未完成：\(error.localizedDescription)") }
         }
     }
 

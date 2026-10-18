@@ -13,18 +13,18 @@ final class ProductSettings: NSObject {
     private unowned let coordinator: Coordinator
     let modePopup = NSPopUpButton()
     let recorder = HotkeyRecorder()
-    let clearButton = NSButton(title: "清除", target: nil, action: nil)
+    let clearButton = NSButton(title: String(localized: "清除"), target: nil, action: nil)
     let hotkeyDetail = SettingsForm.detailLabel()
     let modeDetail = SettingsForm.detailLabel()
     let accessDetail = SettingsForm.detailLabel()
-    let accessButton = NSButton(title: "打开系统设置…", target: nil, action: nil)
+    let accessButton = NSButton(title: String(localized: "打开系统设置…"), target: nil, action: nil)
     #if !APP_STORE
     let commandDetail = SettingsForm.detailLabel()
-    let copyButton = NSButton(title: "拷贝命令", target: nil, action: nil)
+    let copyButton = NSButton(title: String(localized: "拷贝命令"), target: nil, action: nil)
     #endif
     let loginSwitch = NSSwitch()
     let loginDetail = SettingsForm.detailLabel()
-    let quitButton = NSButton(title: "退出", target: nil, action: nil)
+    let quitButton = NSButton(title: String(localized: "退出"), target: nil, action: nil)
     let quitDetail = SettingsForm.detailLabel()
     private enum Row { case mode, hotkey, login }
     /// The result of the latest change made here, shown on the row it belongs to until the next change.
@@ -42,7 +42,7 @@ final class ProductSettings: NSObject {
         let controls: [NSControl] = [modePopup, clearButton, accessButton, copyButton, loginSwitch, quitButton]
         #endif
         for mode in modes {
-            modePopup.addItem(withTitle: mode.title)
+            modePopup.addItem(withTitle: mode.localizedTitle)
             modePopup.lastItem?.representedObject = mode.rawValue
         }
         modePopup.widthAnchor.constraint(equalToConstant: 150).isActive = true
@@ -56,22 +56,22 @@ final class ProductSettings: NSObject {
     func groups() -> [NSView] {
         refresh()
         let keys = NSStackView(views: [recorder, clearButton]); keys.spacing = 8
-        let purpose = SettingsForm.detailLabel("在任意 App 里按下快捷键，列出它菜单栏和各级子菜单里的全部命令；输入即过滤，↑↓ 选择，回车执行，Esc 关闭。菜单内容只在本机读取，不保存、不上传。")
+        let purpose = SettingsForm.detailLabel(String(localized: "在任意 App 里按下快捷键，列出它菜单栏和各级子菜单里的全部命令；输入即过滤，↑↓ 选择，回车执行，Esc 关闭。菜单内容只在本机读取，不保存、不上传。"))
         #if APP_STORE
-        let summon = [SettingsForm.row("内置快捷键呼出", detail: modeDetail),
-                      SettingsForm.row("快捷键", detail: hotkeyDetail, accessory: keys)]
+        let summon = [SettingsForm.row(String(localized: "内置快捷键呼出"), detail: modeDetail),
+                      SettingsForm.row(String(localized: "快捷键"), detail: hotkeyDetail, accessory: keys)]
         #else
-        let summon = [SettingsForm.row("用什么呼出面板", detail: modeDetail, accessory: modePopup),
-                      SettingsForm.row("快捷键", detail: hotkeyDetail, accessory: keys),
-                      SettingsForm.row("外部呼出命令", detail: commandDetail, accessory: copyButton)]
+        let summon = [SettingsForm.row(String(localized: "用什么呼出面板"), detail: modeDetail, accessory: modePopup),
+                      SettingsForm.row(String(localized: "快捷键"), detail: hotkeyDetail, accessory: keys),
+                      SettingsForm.row(String(localized: "外部呼出命令"), detail: commandDetail, accessory: copyButton)]
         #endif
         return [
-            SettingsForm.group(nil, rows: [SettingsForm.row("搜索当前 App 的菜单命令", detail: purpose)]),
-            SettingsForm.group("权限", rows: [SettingsForm.row("辅助功能", detail: accessDetail, accessory: accessButton)]),
-            SettingsForm.group("呼出方式", rows: summon),
-            SettingsForm.group("运行", rows: [
-                SettingsForm.row("登录时启动", detail: loginDetail, accessory: loginSwitch),
-                SettingsForm.row("退出 MenuSearch", detail: quitDetail, accessory: quitButton)])
+            SettingsForm.group(nil, rows: [SettingsForm.row(String(localized: "搜索当前 App 的菜单命令"), detail: purpose)]),
+            SettingsForm.group(String(localized: "权限"), rows: [SettingsForm.row(String(localized: "辅助功能"), detail: accessDetail, accessory: accessButton)]),
+            SettingsForm.group(String(localized: "呼出方式"), rows: summon),
+            SettingsForm.group(String(localized: "运行"), rows: [
+                SettingsForm.row(String(localized: "登录时启动"), detail: loginDetail, accessory: loginSwitch),
+                SettingsForm.row(String(localized: "退出 MenuSearch"), detail: quitDetail, accessory: quitButton)])
         ]
     }
 
@@ -80,34 +80,34 @@ final class ProductSettings: NSObject {
         let builtin = settings.mode == .builtin
         let trusted = AXIsProcessTrusted()
         accessDetail.textColor = trusted ? .secondaryLabelColor : .systemOrange
-        accessDetail.stringValue = trusted ? "已允许。MenuSearch 用它读取当前 App 的菜单并执行你选中的命令。"
-            : "尚未允许。读取和执行菜单命令需要它；请在「隐私与安全性 › 辅助功能」里打开 MenuSearch，这里不会代你授权。"
-        accessButton.title = trusted ? "查看系统设置…" : "打开系统设置…"
+        accessDetail.stringValue = trusted ? String(localized: "已允许。MenuSearch 用它读取当前 App 的菜单并执行你选中的命令。")
+            : String(localized: "尚未允许。读取和执行菜单命令需要它；请在「隐私与安全性 › 辅助功能」里打开 MenuSearch，这里不会代你授权。")
+        accessButton.title = trusted ? String(localized: "查看系统设置…") : String(localized: "打开系统设置…")
         modePopup.selectItem(at: Mode.allCases.firstIndex(of: settings.mode) ?? 0)
-        modeDetail.stringValue = builtin ? "MenuSearch 保持运行并自己注册下面的快捷键，在程序坞、⌘Tab 和菜单栏里都能看到它。关掉这个窗口后仍可呼出，直到你退出它。"
-            : "由 skhd、Karabiner 或其他启动器运行右下方的命令。MenuSearch 不注册快捷键，面板关闭后进程即结束。"
+        modeDetail.stringValue = builtin ? String(localized: "MenuSearch 保持运行并自己注册下面的快捷键，在程序坞、⌘Tab 和菜单栏里都能看到它。关掉这个窗口后仍可呼出，直到你退出它。")
+            : String(localized: "由 skhd、Karabiner 或其他启动器运行右下方的命令。MenuSearch 不注册快捷键，面板关闭后进程即结束。")
         if !recorder.isRecording { recorder.combo = settings.hotkey }
         clearButton.isEnabled = settings.hotkey != nil
         hotkeyDetail.textColor = .secondaryLabelColor
         if let error = coordinator.hotkeyError {
-            hotkeyDetail.stringValue = error; hotkeyDetail.textColor = .systemOrange
+            hotkeyDetail.stringValue = error.localizedMessage; hotkeyDetail.textColor = .systemOrange
         } else if let combo = settings.hotkey {
-            hotkeyDetail.stringValue = builtin ? "\(combo.display) 已注册。在任意 App 里按它即可搜索该 App 的菜单。" + (coordinator.hotkeyWarning.map { " " + $0 } ?? "")
-                : "\(combo.display) 已保存，切回「内置快捷键」后生效。"
+            hotkeyDetail.stringValue = builtin ? String(localized: "\(combo.display) 已注册。在任意 App 里按它即可搜索该 App 的菜单。") + (coordinator.hotkeyWarning.map { " " + $0.localizedMessage } ?? "")
+                : String(localized: "\(combo.display) 已保存，切回「内置快捷键」后生效。")
             if builtin, coordinator.hotkeyWarning != nil { hotkeyDetail.textColor = .systemOrange }
         } else {
-            hotkeyDetail.stringValue = builtin ? "尚未设置。点右侧按钮后按下组合键（至少带 ⌘、⌃ 或 ⌥），Esc 取消。" : "外部呼出方式下不需要。"
+            hotkeyDetail.stringValue = builtin ? String(localized: "尚未设置。点右侧按钮后按下组合键（至少带 ⌘、⌃ 或 ⌥），Esc 取消。") : String(localized: "外部呼出方式下不需要。")
         }
         #if !APP_STORE
-        commandDetail.stringValue = builtin ? "\(Self.command)：其他工具也可以运行它来呼出，同一个面板。"
-            : "\(Self.command)：把它绑到你的键位工具上。MenuSearch 不会改动那些工具的配置。"
+        commandDetail.stringValue = builtin ? String(localized: "\(Self.command)：其他工具也可以运行它来呼出，同一个面板。")
+            : String(localized: "\(Self.command)：把它绑到你的键位工具上。MenuSearch 不会改动那些工具的配置。")
         #endif
         loginSwitch.state = coordinator.login.enabled ? .on : .off
         loginSwitch.isEnabled = builtin
-        loginDetail.stringValue = builtin ? "开机登录后自动启动，不显示窗口。" : "外部呼出方式下不常驻，不需要登录时启动。"
-        quitDetail.stringValue = coordinator.staysResident ? "也可以从程序坞、菜单栏图标或 ⌘Q 退出。退出后快捷键不再响应，直到再次打开 MenuSearch。"
-            : "现在没有设置可用的快捷键，MenuSearch 不会留在后台；关掉这个窗口它就结束。"
-        if let problem = coordinator.store.loadError {
+        loginDetail.stringValue = builtin ? String(localized: "开机登录后自动启动，不显示窗口。") : String(localized: "外部呼出方式下不常驻，不需要登录时启动。")
+        quitDetail.stringValue = coordinator.staysResident ? String(localized: "也可以从程序坞、菜单栏图标或 ⌘Q 退出。退出后快捷键不再响应，直到再次打开 MenuSearch。")
+            : String(localized: "现在没有设置可用的快捷键，MenuSearch 不会留在后台；关掉这个窗口它就结束。")
+        if let problem = coordinator.store.localizedLoadError {
             modeDetail.stringValue = problem; modeDetail.textColor = .systemOrange
         } else { modeDetail.textColor = .secondaryLabelColor }
         loginDetail.textColor = .secondaryLabelColor
@@ -120,8 +120,8 @@ final class ProductSettings: NSObject {
 
     private func report(_ result: Result<String?, ProductError>, on row: Row) {
         switch result {
-        case .success(let notice): feedback = notice.map { ($0, false, row) }
-        case .failure(let error): feedback = (error.message, true, row)
+        case .success(let notice): feedback = notice.map { (coordinator.hotkeyWarning?.localizedMessage ?? $0, false, row) }
+        case .failure(let error): feedback = (error.localizedMessage, true, row)
         }
         refresh()
     }
@@ -157,7 +157,7 @@ final class ProductSettings: NSObject {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(Self.command, forType: .string)
             feedback = nil
-            commandDetail.stringValue = "已拷贝：\(Self.command)"
+            commandDetail.stringValue = String(localized: "已拷贝：\(Self.command)")
         #endif
         case quitButton: coordinator.terminate()
         default: break

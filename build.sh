@@ -85,6 +85,7 @@ APP="$STAGE/MenuSearch.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp Info.plist "$APP/Contents/Info.plist"
 cp icon/AppIcon.icns Resources/tuning.json LICENSE "$APP/Contents/Resources/"
+xcrun xcstringstool compile Resources/Localizable.xcstrings --output-directory "$APP/Contents/Resources"
 
 SOURCES=()
 while IFS= read -r line; do SOURCES+=("$line"); done < <(find Sources -type f -name '*.swift' | LC_ALL=C sort)

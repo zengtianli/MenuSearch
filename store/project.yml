@@ -1,12 +1,14 @@
 # Same product sources as ../build.sh; the store build has no CLI or self-updater.
 name: MenuSearch
 options:
+  developmentLanguage: en
   deploymentTarget:
     macOS: "14.0"
 settings:
   base:
+    DEVELOPMENT_LANGUAGE: en
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.3.3"
+    MARKETING_VERSION: "0.3.4"
     CURRENT_PROJECT_VERSION: "1"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: B9LJH93LA4
@@ -24,6 +26,8 @@ targets:
           - AppLifecycleUI.swift
       - path: Assets.xcassets
       - path: ../Resources/tuning.json
+        buildPhase: resources
+      - path: ../Resources/Localizable.xcstrings
         buildPhase: resources
       - path: ../LICENSE
         buildPhase: resources
@@ -49,6 +53,8 @@ targets:
     info:
       path: Info.plist
       properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, zh-Hans]
         CFBundleExecutable: $(EXECUTABLE_NAME)
         CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
         CFBundleName: MenuSearch

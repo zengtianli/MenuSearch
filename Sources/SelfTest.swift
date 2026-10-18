@@ -28,7 +28,7 @@ enum SelfTest {
     private static func succeeded(_ result: Result<String?, ProductError>) -> Bool { if case .success = result { return true }; return false }
 
     /// The compositor supplies the blurred backdrop on screen; offscreen the window background stands in for it.
-    private static func render(_ controller: PanelController, to url: URL, appearance name: NSAppearance.Name) throws -> Bool {
+    static func render(_ controller: PanelController, to url: URL, appearance name: NSAppearance.Name) throws -> Bool {
         guard let appearance = NSAppearance(named: name), let view = controller.panel.contentView else { return false }
         controller.panel.appearance = appearance
         view.layoutSubtreeIfNeeded()
@@ -179,6 +179,9 @@ enum SelfTest {
             coordinator.installSettingsWindow()
             let settings = try AppLifecycleUI.shared.offscreenSnapshot(to: out.appendingPathComponent("settings.png"), appearance: .aqua)
             written["settings.png"] = !settings.isEmpty && settings.values.allSatisfy { $0 }
+            if arguments.contains("--l10n-check") {
+                try LocalizationSelfTest.check(panel: list, coordinator: coordinator, out: out)
+            }
         } catch { fputs(error.localizedDescription + "\n", stderr); exit(1) }
         let ok = written.count == 3 && written.values.allSatisfy { $0 } && NSApp.windows.allSatisfy { !$0.isVisible }
         CLI.printJSON(["ok": ok, "files": written, "version": Env.version, "build": Env.build, "data": "fixed demo menu"])
@@ -236,7 +239,7 @@ enum SelfTest {
         ui.executeSelection()
         checks["nothing_selected_not_executed"] = ui.testExecuted == ["0"]
         ui.presentFixture(snapshot([items[0]], complete: false, warnings: ["部分菜单暂未响应，请刷新后重试。"]))
-        checks["incomplete_is_stated"] = ui.state.stringValue.contains("不完整")
+        checks["incomplete_is_stated"] = ui.state.stringValue.hasPrefix(String(localized: "结果不完整："))
         let updated = MenuCommand(id: "0", title: "Hide Status Bar", path: ["View", "Hide Status Bar"], shortcut: "⌘/", enabled: true, checked: false)
         ui.presentFixture(snapshot([updated]))
         checks["fresh_dynamic_titles"] = ui.shown.first?.title == "Hide Status Bar" && !ui.shown.contains { $0.title.contains("Export") }
@@ -314,7 +317,7 @@ enum SelfTest {
         let coordinator = Coordinator(store: store, testing: true)
         let registrar = FakeRegistrar(), login = FakeLogin(), quits = Counter()
         coordinator.registrar = registrar; coordinator.login = login
-        coordinator.systemConflict = { $0.canonical == "ctrl+up" ? "\($0.display) 已是 macOS 的系统快捷键。" : nil }
+        coordinator.systemConflict = { $0.canonical == "ctrl+up" ? ProductError("\($0.display) 已是 macOS 的系统快捷键。") : nil }
         coordinator.registryConflict = { _ in nil }; coordinator.declare = { _ in }
         coordinator.terminate = { quits.value += 1 }
         // What the product asked to show: (Dock and ⌘Tab, menu bar icon).
@@ -383,7 +386,7 @@ enum SelfTest {
         // The menu under the menu bar icon, and the shortcut as a menu shows it.
         let barMenu = NSMenu()
         MenuBarMenu.fill(barMenu, hotkey: altM, target: nil)
-        checks["menu_bar_menu_has_search_settings_quit"] = barMenu.items.map(\.title) == ["搜索当前 App 的菜单", "", "设置…", "", "退出 MenuSearch"]
+        checks["menu_bar_menu_has_search_settings_quit"] = barMenu.items.map(\.title) == [String(localized: "搜索当前 App 的菜单"), "", String(localized: "设置…"), "", String(localized: "退出 \(Env.productName)")]
             && barMenu.items.allSatisfy { $0.isSeparatorItem || $0.action != nil }
             && barMenu.items[0].keyEquivalent == "m" && barMenu.items[0].keyEquivalentModifierMask == .option
         let spaceKey = Combo(canonical: "cmd+shift+space")!.menuEquivalent, functionKey = Combo(canonical: "ctrl+f5")!.menuEquivalent
@@ -446,7 +449,7 @@ enum SelfTest {
         let row: [[String: Any]] = [["component": "otherapp", "mode": "global", "key": "⌥M", "description": "别的功能"]]
         try JSONSerialization.data(withJSONObject: row).write(to: registry.appendingPathComponent("otherapp.json"))
         try JSONSerialization.data(withJSONObject: row).write(to: registry.appendingPathComponent(KeyConflicts.registryFile))
-        checks["registry_conflict_reported"] = KeyConflicts.registered(altM, in: registry)?.contains("otherapp") == true
+        checks["registry_conflict_reported"] = KeyConflicts.registered(altM, in: registry)?.message.contains("otherapp") == true
             && KeyConflicts.registered(Combo(canonical: "alt+k")!, in: registry) == nil
         func declared() -> [[String: Any]] {
             ((try? JSONSerialization.jsonObject(with: Data(contentsOf: registry.appendingPathComponent(KeyConflicts.registryFile)))) as? [[String: Any]]) ?? []
@@ -458,7 +461,7 @@ enum SelfTest {
 
         let skhdrc = Env.supportDirectory.appendingPathComponent("skhdrc")
         try Data("# comment\nctrl + shift - 0x29 : echo right\nlalt - k : echo left-only\nalt - m : \"/Applications/Other.app/Contents/MacOS/Other\" --menu\nhyper - f12 : echo hyper\n".utf8).write(to: skhdrc)
-        checks["skhd_binding_reported"] = KeyConflicts.skhd(altM, files: [skhdrc])?.contains("Other.app") == true
+        checks["skhd_binding_reported"] = KeyConflicts.skhd(altM, files: [skhdrc])?.message.contains("Other.app") == true
             && KeyConflicts.skhd(Combo(canonical: "ctrl+shift+semicolon")!, files: [skhdrc]) != nil
             && KeyConflicts.skhd(Combo(canonical: "cmd+ctrl+alt+shift+f12")!, files: [skhdrc]) != nil
             && KeyConflicts.skhd(Combo(canonical: "alt+k")!, files: [skhdrc]) == nil
@@ -505,10 +508,10 @@ enum SelfTest {
         checks["settings_render_light"] = !light.isEmpty && light.values.allSatisfy { $0 }
         checks["settings_render_dark"] = !dark.isEmpty && dark.values.allSatisfy { $0 }
         if let product = coordinator.productSettings {
-            checks["settings_reflect_state"] = product.modePopup.titleOfSelectedItem == Mode.builtin.title && product.recorder.title == "⌥K"
+            checks["settings_reflect_state"] = product.modePopup.titleOfSelectedItem == Mode.builtin.localizedTitle && product.recorder.title == "⌥K"
                 && product.loginSwitch.isEnabled && product.clearButton.isEnabled
             product.recordForTest(Combo(canonical: "cmd+space")!)
-            checks["settings_refusal_keeps_previous"] = product.hotkeyDetail.stringValue.contains("占用") && product.recorder.title == "⌥K"
+            checks["settings_refusal_keeps_previous"] = product.hotkeyDetail.stringValue == ProductError(localized: "\(Combo(canonical: "cmd+space")!.display) 已被其他 App 占用，未能注册；原快捷键保持不变。").localizedMessage && product.recorder.title == "⌥K"
                 && registrar.combo?.canonical == "alt+k"
             product.recordForTest(altM)
             checks["settings_record_applies"] = product.recorder.title == "⌥M" && registrar.combo == altM && stored().hotkey == altM

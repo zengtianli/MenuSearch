@@ -124,7 +124,7 @@ private final class CommandCell: NSTableCellView {
         title.textColor = command.enabled ? .labelColor : .tertiaryLabelColor
         path.stringValue = command.location
         path.textColor = command.enabled ? .secondaryLabelColor : .tertiaryLabelColor
-        note.stringValue = command.enabled ? "" : "不可用"
+        note.stringValue = command.enabled ? "" : String(localized: "不可用")
         note.isHidden = command.enabled
         keys.shortcut = command.shortcut
         keys.isHidden = command.shortcut.isEmpty
@@ -182,7 +182,7 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
     let timing = NSTextField(labelWithString: "")
     /// Shown in place of the list when there is nothing to list.
     let message = NSTextField(wrappingLabelWithString: "")
-    let accessibilityButton = NSButton(title: "打开辅助功能设置…", target: nil, action: nil)
+    let accessibilityButton = NSButton(title: String(localized: "打开辅助功能设置…"), target: nil, action: nil)
     private let targetIcon = NSImageView()
     private let queue = DispatchQueue(label: "cyou.tianli.menusearch.menu-reader", qos: .userInitiated)
     private(set) var reader: MenuReader?
@@ -230,7 +230,7 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
         targetIcon.imageScaling = .scaleProportionallyUpOrDown
         search.isBordered = false; search.drawsBackground = false; search.focusRingType = .none
         search.font = .systemFont(ofSize: 19)
-        search.placeholderString = "搜索菜单命令…"
+        search.placeholderString = String(localized: "搜索菜单命令…")
         search.lineBreakMode = .byTruncatingTail
         search.cell?.usesSingleLineMode = true
         search.cell?.isScrollable = true
@@ -267,9 +267,9 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
         state.lineBreakMode = .byTruncatingTail
         state.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         let actions = NSStackView(views: [
-            FooterAction("执行", key: "↩") { [weak self] in self?.executeSelection() },
-            FooterAction("刷新", key: "⌘R") { [weak self] in self?.refresh() },
-            FooterAction("设置", key: "⌘,") { [weak self] in self?.openSettings() }
+            FooterAction(String(localized: "执行"), key: "↩") { [weak self] in self?.executeSelection() },
+            FooterAction(String(localized: "刷新"), key: "⌘R") { [weak self] in self?.refresh() },
+            FooterAction(String(localized: "设置"), key: "⌘,") { [weak self] in self?.openSettings() }
         ])
         actions.spacing = 16; actions.alignment = .centerY
         actions.setContentCompressionResistancePriority(.required, for: .horizontal)
@@ -327,8 +327,8 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
 
     /// The caller has already captured `target`, before anything here can change which application is in front.
     func present(target: NSRunningApplication, requestedAt: Date = Date()) {
-        begin(name: target.localizedName ?? "当前 App", icon: target.icon)
-        reader = MenuReader(target: target)
+        begin(name: target.localizedName ?? String(localized: "当前 App"), icon: target.icon)
+        reader = MenuReader(target: target, languageBundle: .main)
         self.requestedAt = requestedAt
         show()
         refresh()
@@ -344,20 +344,18 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
     func present(message text: String) {
         begin(name: "", icon: NSApp.applicationIconImage)
         showEmpty(text)
-        state.stringValue = "没有可搜索的 App"
+        state.stringValue = String(localized: "没有可搜索的 App")
         show()
     }
 
-    #if APP_STORE
     /// The same explicit state is used before scanning and by the offscreen store check.
     func presentAccessibilityGuidance() {
         begin(name: "", icon: NSApp.applicationIconImage)
-        showEmpty(MenuSearchError.accessibility.localizedDescription, accessibility: true)
-        state.stringValue = "请先允许辅助功能权限"
+        showEmpty(MenuSearchError.accessibility.localizedMessage, accessibility: true)
+        state.stringValue = String(localized: "请先允许辅助功能权限")
         state.textColor = .systemOrange
         show()
     }
-    #endif
 
     private func begin(name: String, icon: NSImage?) {
         active = true; generation += 1
@@ -366,7 +364,7 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
         targetName = name; rowIcon = icon
         targetIcon.image = icon
         search.stringValue = ""
-        search.placeholderString = name.isEmpty ? "搜索菜单命令…" : "搜索 \(name) 的菜单命令…"
+        search.placeholderString = name.isEmpty ? String(localized: "搜索菜单命令…") : String(localized: "搜索 \(name) 的菜单命令…")
         header.stringValue = name; timing.stringValue = ""
         state.stringValue = ""; state.textColor = .secondaryLabelColor
         panel.title = name.isEmpty ? Env.productName : "\(Env.productName) · \(name)"
@@ -407,7 +405,7 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
     func refresh() {
         guard active, !busy, let reader else { return }
         busy = true
-        state.stringValue = "正在读取菜单…"; state.textColor = .secondaryLabelColor
+        state.stringValue = String(localized: "正在读取菜单…"); state.textColor = .secondaryLabelColor
         generation += 1
         let version = generation
         queue.async { [weak self] in
@@ -421,8 +419,8 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
                     self.snapshot = nil; self.index = MenuSearchIndex([]); self.shown = []
                     self.table.reloadData(); self.timing.stringValue = ""
                     self.header.stringValue = self.targetName
-                    self.state.stringValue = "读取失败，可按 ⌘R 重试"; self.state.textColor = .systemOrange
-                    self.showEmpty(error.localizedDescription, accessibility: !AXIsProcessTrusted())
+                    self.state.stringValue = String(localized: "读取失败，可按 ⌘R 重试"); self.state.textColor = .systemOrange
+                    self.showEmpty((error as? MenuSearchError)?.localizedMessage ?? error.localizedDescription, accessibility: !AXIsProcessTrusted())
                     self.requestedAt = nil
                 }
             }
@@ -433,7 +431,7 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
         self.snapshot = snapshot
         index = MenuSearchIndex(snapshot.items)
         targetName = snapshot.app
-        search.placeholderString = "搜索 \(snapshot.app) 的菜单命令…"
+        search.placeholderString = String(localized: "搜索 \(snapshot.app) 的菜单命令…")
         panel.title = "\(Env.productName) · \(snapshot.app)"
         filter()
         if let requestedAt {
@@ -453,14 +451,14 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
         else { table.deselectAll(nil) }
         guard let snapshot else { return }
         let total = snapshot.items.count
-        header.stringValue = shown.count == total ? "\(snapshot.app)（\(total) 条）" : "\(snapshot.app)（\(shown.count) / \(total) 条）"
+        header.stringValue = shown.count == total ? String(localized: "\(snapshot.app)（\(total) 条）") : String(localized: "\(snapshot.app)（\(shown.count) / \(total) 条）")
         timing.stringValue = "\(Int(snapshot.durationMS.rounded())) ms"
         if snapshot.complete {
-            state.stringValue = "仅搜索 \(snapshot.app) 的菜单"; state.textColor = .secondaryLabelColor
+            state.stringValue = String(localized: "仅搜索 \(snapshot.app) 的菜单"); state.textColor = .secondaryLabelColor
         } else {
-            state.stringValue = "结果不完整：" + snapshot.warnings.joined(separator: " "); state.textColor = .systemOrange
+            state.stringValue = String(localized: "结果不完整：") + snapshot.warnings.joined(separator: " "); state.textColor = .systemOrange
         }
-        showEmpty(shown.isEmpty ? (total == 0 ? "\(snapshot.app) 没有可读取的菜单命令。" : "没有匹配的菜单命令") : nil)
+        showEmpty(shown.isEmpty ? (total == 0 ? String(localized: "\(snapshot.app) 没有可读取的菜单命令。") : String(localized: "没有匹配的菜单命令")) : nil)
     }
 
     func numberOfRows(in tableView: NSTableView) -> Int { shown.count }
@@ -496,11 +494,11 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
     @objc func executeSelection() {
         guard active, !busy, shown.indices.contains(table.selectedRow) else { return }
         let command = shown[table.selectedRow]
-        guard command.enabled else { state.stringValue = "这个命令当前不可用"; state.textColor = .systemOrange; return }
+        guard command.enabled else { state.stringValue = String(localized: "这个命令当前不可用"); state.textColor = .systemOrange; return }
         if testing { testExecuted.append(command.id); return }
         guard let reader, let current = NSWorkspace.shared.frontmostApplication,
               current.processIdentifier == reader.target.processIdentifier else {
-            state.stringValue = "当前 App 已变化，请关闭面板后重新呼出。"; state.textColor = .systemOrange; return
+            state.stringValue = String(localized: "当前 App 已变化，请关闭面板后重新呼出。"); state.textColor = .systemOrange; return
         }
         busy = true; executing = true
         let version = generation
@@ -515,7 +513,7 @@ final class PanelController: NSObject, NSTableViewDataSource, NSTableViewDelegat
                 case .failure(let error):
                     self.busy = false; self.executing = false
                     self.show()
-                    self.state.stringValue = error.localizedDescription; self.state.textColor = .systemOrange
+                    self.state.stringValue = (error as? MenuSearchError)?.localizedMessage ?? error.localizedDescription; self.state.textColor = .systemOrange
                 }
             }
         }

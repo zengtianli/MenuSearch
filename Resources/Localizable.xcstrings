@@ -1,0 +1,2114 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    " 呼出方式保持为外部呼出。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " Activation remains set to External Launcher."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " 呼出方式保持为外部呼出。"
+          }
+        }
+      }
+    },
+    "%@ · 版本 %@ (%@)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · Version %@ (%@)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · 版本 %@ (%@)"
+          }
+        }
+      }
+    },
+    "%@ · 菜单搜索": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · Menu Search"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · 菜单搜索"
+          }
+        }
+      }
+    },
+    "%@ 已保存，切回「内置快捷键」后生效。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is saved. Switch to Built-in Shortcut to use it."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 已保存，切回「内置快捷键」后生效。"
+          }
+        }
+      }
+    },
+    "%@ 已是 macOS 的系统快捷键（系统设置 › 键盘 › 键盘快捷键）。请换一个组合，或先在那里关闭它。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is a macOS shortcut (System Settings › Keyboard › Keyboard Shortcuts). Choose another shortcut or disable the system shortcut there."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 已是 macOS 的系统快捷键（系统设置 › 键盘 › 键盘快捷键）。请换一个组合，或先在那里关闭它。"
+          }
+        }
+      }
+    },
+    "%@ 已注册。在任意 App 里按它即可搜索该 App 的菜单。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is registered. Press it in any app to search that app’s menus."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 已注册。在任意 App 里按它即可搜索该 App 的菜单。"
+          }
+        }
+      }
+    },
+    "%@ 已被其他 App 占用，未能注册。请换一个组合。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is in use by another app. Choose a different shortcut."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 已被其他 App 占用，未能注册。请换一个组合。"
+          }
+        }
+      }
+    },
+    "%@ 已被其他 App 占用，未能注册；原快捷键保持不变。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is in use by another app. Your previous shortcut is unchanged."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 已被其他 App 占用，未能注册；原快捷键保持不变。"
+          }
+        }
+      }
+    },
+    "%@ 已被其他 App 占用，未能注册；呼出方式保持为外部呼出，请先换一个快捷键。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is in use by another app. Activation remains set to External Launcher. Choose a different shortcut first."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 已被其他 App 占用，未能注册；呼出方式保持为外部呼出，请先换一个快捷键。"
+          }
+        }
+      }
+    },
+    "%@ 没有可读取的菜单命令。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ has no readable menu commands."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 没有可读取的菜单命令。"
+          }
+        }
+      }
+    },
+    "%@ 没有提供可读取的菜单栏。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ does not provide a readable menu bar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 没有提供可读取的菜单栏。"
+          }
+        }
+      }
+    },
+    "%@ 设置": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 设置"
+          }
+        }
+      }
+    },
+    "%@（%lld / %lld 条）": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · Commands: %lld / %lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@（%lld / %lld 条）"
+          }
+        }
+      }
+    },
+    "%@（%lld 条）": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · Commands: %lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@（%lld 条）"
+          }
+        }
+      }
+    },
+    "%@：其他工具也可以运行它来呼出，同一个面板。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: other tools can run this command to open the same panel."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@：其他工具也可以运行它来呼出，同一个面板。"
+          }
+        }
+      }
+    },
+    "%@：把它绑到你的键位工具上。MenuSearch 不会改动那些工具的配置。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: assign this command in your shortcut tool. MenuSearch does not change that tool’s settings."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@：把它绑到你的键位工具上。MenuSearch 不会改动那些工具的配置。"
+          }
+        }
+      }
+    },
+    "App 没有执行这个命令（%d）。请刷新后重试。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app couldn’t run this command (%d). Refresh to try again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App 没有执行这个命令（%d）。请刷新后重试。"
+          }
+        }
+      }
+    },
+    "Mac App Store 版使用内置快捷键呼出。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The App Store edition uses the built-in shortcut."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac App Store 版使用内置快捷键呼出。"
+          }
+        }
+      }
+    },
+    "MenuSearch 保持运行并自己注册下面的快捷键，在程序坞、⌘Tab 和菜单栏里都能看到它。关掉这个窗口后仍可呼出，直到你退出它。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MenuSearch stays running with the shortcut below and appears in the Dock, ⌘Tab, and menu bar. The shortcut works after you close Settings, until you quit MenuSearch."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MenuSearch 保持运行并自己注册下面的快捷键，在程序坞、⌘Tab 和菜单栏里都能看到它。关掉这个窗口后仍可呼出，直到你退出它。"
+          }
+        }
+      }
+    },
+    "MenuSearch 还没有辅助功能权限。请在「系统设置 › 隐私与安全性 › 辅助功能」中允许 MenuSearch，再重新呼出。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MenuSearch needs Accessibility permission. Enable MenuSearch in System Settings › Privacy & Security › Accessibility, then open the panel again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MenuSearch 还没有辅助功能权限。请在「系统设置 › 隐私与安全性 › 辅助功能」中允许 MenuSearch，再重新呼出。"
+          }
+        }
+      }
+    },
+    "skhd 也绑定了 %@（%@）。两边会抢同一个键，通常是 skhd 先拿走、这里收不到。可以改用「外部呼出」并让 skhd 运行 menusearch show，或换一个组合。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "skhd also uses %@ (%@) and usually intercepts it first. Choose External Launcher and have skhd run menusearch show, or choose a different shortcut."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "skhd 也绑定了 %@（%@）。两边会抢同一个键，通常是 skhd 先拿走、这里收不到。可以改用「外部呼出」并让 skhd 运行 menusearch show，或换一个组合。"
+          }
+        }
+      }
+    },
+    "不可用": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不可用"
+          }
+        }
+      }
+    },
+    "不是有效的设置文件": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not a valid settings file"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不是有效的设置文件"
+          }
+        }
+      }
+    },
+    "也可以从程序坞、菜单栏图标或 ⌘Q 退出。退出后快捷键不再响应，直到再次打开 MenuSearch。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can also quit from the Dock, the menu bar, or with ⌘Q. The shortcut stops working until you open MenuSearch again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "也可以从程序坞、菜单栏图标或 ⌘Q 退出。退出后快捷键不再响应，直到再次打开 MenuSearch。"
+          }
+        }
+      }
+    },
+    "仅搜索 %@ 的菜单": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Searching %@ menus only"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅搜索 %@ 的菜单"
+          }
+        }
+      }
+    },
+    "使用 iCloud 记住配置": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync Settings with iCloud"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 iCloud 记住配置"
+          }
+        }
+      }
+    },
+    "使用系统 Apple 账户同步快捷键配置。辅助功能权限和登录项保留在本机。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync shortcut settings using your Apple Account. Accessibility permission and login settings stay on this Mac."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用系统 Apple 账户同步快捷键配置。辅助功能权限和登录项保留在本机。"
+          }
+        }
+      }
+    },
+    "全选": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select All"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全选"
+          }
+        }
+      }
+    },
+    "全部显示": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show All"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部显示"
+          }
+        }
+      }
+    },
+    "关于 %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关于 %@"
+          }
+        }
+      }
+    },
+    "关闭": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        }
+      }
+    },
+    "内置快捷键": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in Shortcut"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内置快捷键"
+          }
+        }
+      }
+    },
+    "内置快捷键呼出": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in Shortcut"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内置快捷键呼出"
+          }
+        }
+      }
+    },
+    "刷新": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷新"
+          }
+        }
+      }
+    },
+    "剪切": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cut"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "剪切"
+          }
+        }
+      }
+    },
+    "呼出方式": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activation"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "呼出方式"
+          }
+        }
+      }
+    },
+    "呼出方式只能是 builtin 或 external。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activation must be builtin or external."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "呼出方式只能是 builtin 或 external。"
+          }
+        }
+      }
+    },
+    "呼出方式无效": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid activation mode"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "呼出方式无效"
+          }
+        }
+      }
+    },
+    "在任意 App 里按下快捷键，列出它菜单栏和各级子菜单里的全部命令；输入即过滤，↑↓ 选择，回车执行，Esc 关闭。菜单内容只在本机读取，不保存、不上传。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press the shortcut in any app to list its menu commands, including submenus. Type to filter, use ↑↓ to select, Return to run, and Esc to close. Menus are read on this Mac and are never saved or uploaded."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在任意 App 里按下快捷键，列出它菜单栏和各级子菜单里的全部命令；输入即过滤，↑↓ 选择，回车执行，Esc 关闭。菜单内容只在本机读取，不保存、不上传。"
+          }
+        }
+      }
+    },
+    "外部呼出": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "External Launcher"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外部呼出"
+          }
+        }
+      }
+    },
+    "外部呼出命令": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Launcher Command"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外部呼出命令"
+          }
+        }
+      }
+    },
+    "外部呼出方式下 MenuSearch 不常驻，不需要登录时启动。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "With an external launcher, MenuSearch runs on demand and does not need to launch at login."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外部呼出方式下 MenuSearch 不常驻，不需要登录时启动。"
+          }
+        }
+      }
+    },
+    "外部呼出方式下不常驻，不需要登录时启动。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "With an external launcher, MenuSearch runs on demand and does not need to launch at login."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外部呼出方式下不常驻，不需要登录时启动。"
+          }
+        }
+      }
+    },
+    "外部呼出方式下不需要。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not needed when using an external launcher."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外部呼出方式下不需要。"
+          }
+        }
+      }
+    },
+    "导入与导出": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import and Export"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导入与导出"
+          }
+        }
+      }
+    },
+    "导入未完成：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t import settings: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导入未完成：%@"
+          }
+        }
+      }
+    },
+    "导入配置…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import Settings…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导入配置…"
+          }
+        }
+      }
+    },
+    "导出未完成：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t export settings: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出未完成：%@"
+          }
+        }
+      }
+    },
+    "导出配置…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export Settings…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出配置…"
+          }
+        }
+      }
+    },
+    "尚未允许。读取和执行菜单命令需要它；请在「隐私与安全性 › 辅助功能」里打开 MenuSearch，这里不会代你授权。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permission required. Enable MenuSearch in Privacy & Security › Accessibility to read menus and run commands. Only you can grant this permission."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未允许。读取和执行菜单命令需要它；请在「隐私与安全性 › 辅助功能」里打开 MenuSearch，这里不会代你授权。"
+          }
+        }
+      }
+    },
+    "尚未设置。点右侧按钮后按下组合键（至少带 ⌘、⌃ 或 ⌥），Esc 取消。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No shortcut set. Click Record Shortcut, then press a key with ⌘, ⌃, or ⌥. Press Esc to cancel."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未设置。点右侧按钮后按下组合键（至少带 ⌘、⌃ 或 ⌥），Esc 取消。"
+          }
+        }
+      }
+    },
+    "已允许。MenuSearch 用它读取当前 App 的菜单并执行你选中的命令。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allowed. MenuSearch uses Accessibility to read the current app’s menus and run the command you select."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已允许。MenuSearch 用它读取当前 App 的菜单并执行你选中的命令。"
+          }
+        }
+      }
+    },
+    "已关闭登录时启动：外部呼出方式下 MenuSearch 不常驻。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Launch at Login is off. With an external launcher, MenuSearch runs on demand."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已关闭登录时启动：外部呼出方式下 MenuSearch 不常驻。"
+          }
+        }
+      }
+    },
+    "已导入；原配置已备份。商店版使用内置快捷键。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings imported and the previous settings backed up. The App Store edition uses the built-in shortcut."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已导入；原配置已备份。商店版使用内置快捷键。"
+          }
+        }
+      }
+    },
+    "已拷贝：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已拷贝：%@"
+          }
+        }
+      }
+    },
+    "开机登录后自动启动，不显示窗口。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start in the background when you log in."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开机登录后自动启动，不显示窗口。"
+          }
+        }
+      }
+    },
+    "当前 App": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current App"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前 App"
+          }
+        }
+      }
+    },
+    "当前 App 已变化，请关闭面板后重新呼出。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The active app has changed. Close the panel and open it again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前 App 已变化，请关闭面板后重新呼出。"
+          }
+        }
+      }
+    },
+    "录制快捷键": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record Shortcut"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录制快捷键"
+          }
+        }
+      }
+    },
+    "快捷键": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shortcut"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快捷键"
+          }
+        }
+      }
+    },
+    "快捷键无效": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid shortcut"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快捷键无效"
+          }
+        }
+      }
+    },
+    "快捷键配置无效。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The shortcut settings are invalid."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快捷键配置无效。"
+          }
+        }
+      }
+    },
+    "打开系统设置…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开系统设置…"
+          }
+        }
+      }
+    },
+    "打开辅助功能设置…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Accessibility Settings…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开辅助功能设置…"
+          }
+        }
+      }
+    },
+    "执行": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "执行"
+          }
+        }
+      }
+    },
+    "拷贝": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拷贝"
+          }
+        }
+      }
+    },
+    "拷贝命令": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Command"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拷贝命令"
+          }
+        }
+      }
+    },
+    "搜索 %@ 的菜单命令…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search %@ menu commands…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索 %@ 的菜单命令…"
+          }
+        }
+      }
+    },
+    "搜索当前 App 的菜单": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Current App’s Menus"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索当前 App 的菜单"
+          }
+        }
+      }
+    },
+    "搜索当前 App 的菜单命令": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search the Current App’s Menus"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索当前 App 的菜单命令"
+          }
+        }
+      }
+    },
+    "搜索菜单命令…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search menu commands…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索菜单命令…"
+          }
+        }
+      }
+    },
+    "撤销": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撤销"
+          }
+        }
+      }
+    },
+    "最小化": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minimize"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最小化"
+          }
+        }
+      }
+    },
+    "未知的配置项：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown setting: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未知的配置项：%@"
+          }
+        }
+      }
+    },
+    "权限": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permissions"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "权限"
+          }
+        }
+      }
+    },
+    "查看系统设置…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View System Settings…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看系统设置…"
+          }
+        }
+      }
+    },
+    "正在读取菜单…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading menus…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在读取菜单…"
+          }
+        }
+      }
+    },
+    "没有匹配的菜单命令": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No matching menu commands"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有匹配的菜单命令"
+          }
+        }
+      }
+    },
+    "没有可搜索的 App": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No App to Search"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有可搜索的 App"
+          }
+        }
+      }
+    },
+    "没有找到当前 App。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No active app was found."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有找到当前 App。"
+          }
+        }
+      }
+    },
+    "没有比当前更新的正式版本。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You’re using the latest release."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有比当前更新的正式版本。"
+          }
+        }
+      }
+    },
+    "清除": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除"
+          }
+        }
+      }
+    },
+    "现在在前面的是 MenuSearch 自己的窗口。请先切到要搜索的 App，再呼出。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MenuSearch is the active app. Switch to the app you want to search, then open the panel again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "现在在前面的是 MenuSearch 自己的窗口。请先切到要搜索的 App，再呼出。"
+          }
+        }
+      }
+    },
+    "现在没有设置可用的快捷键，MenuSearch 不会留在后台；关掉这个窗口它就结束。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No active shortcut is set. MenuSearch quits when you close this window."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "现在没有设置可用的快捷键，MenuSearch 不会留在后台；关掉这个窗口它就结束。"
+          }
+        }
+      }
+    },
+    "用什么呼出面板": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the Search Panel"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用什么呼出面板"
+          }
+        }
+      }
+    },
+    "由 skhd、Karabiner 或其他启动器运行右下方的命令。MenuSearch 不注册快捷键，面板关闭后进程即结束。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run the command below from skhd, Karabiner, or another launcher. MenuSearch does not register a shortcut and quits when the panel closes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "由 skhd、Karabiner 或其他启动器运行右下方的命令。MenuSearch 不注册快捷键，面板关闭后进程即结束。"
+          }
+        }
+      }
+    },
+    "登录时启动": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Launch at Login"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登录时启动"
+          }
+        }
+      }
+    },
+    "登录时启动未能更改：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t change Launch at Login: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登录时启动未能更改：%@"
+          }
+        }
+      }
+    },
+    "目标 App 已退出。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app has quit."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标 App 已退出。"
+          }
+        }
+      }
+    },
+    "目标 App 已退出。请回到要搜索的 App 再呼出。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app has quit. Switch to the app you want to search, then open the panel again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标 App 已退出。请回到要搜索的 App 再呼出。"
+          }
+        }
+      }
+    },
+    "目标 App 已退出。请重新呼出菜单搜索。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app has quit. Open menu search again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标 App 已退出。请重新呼出菜单搜索。"
+          }
+        }
+      }
+    },
+    "窗口": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口"
+          }
+        }
+      }
+    },
+    "粘贴": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粘贴"
+          }
+        }
+      }
+    },
+    "结果不完整：": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partial results: "
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "结果不完整："
+          }
+        }
+      }
+    },
+    "编辑": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编辑"
+          }
+        }
+      }
+    },
+    "菜单已经变化，请刷新后重新选择。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The menu has changed. Refresh and select the command again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "菜单已经变化，请刷新后重新选择。"
+          }
+        }
+      }
+    },
+    "菜单结构过大，结果不完整。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The menu is too large to read in full. Results are incomplete."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "菜单结构过大，结果不完整。"
+          }
+        }
+      }
+    },
+    "菜单读取超过 %@ 秒，结果不完整。请刷新后重试。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading menus took longer than %@ seconds. Results are incomplete. Refresh to try again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "菜单读取超过 %@ 秒，结果不完整。请刷新后重试。"
+          }
+        }
+      }
+    },
+    "设置": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置"
+          }
+        }
+      }
+    },
+    "设置…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置…"
+          }
+        }
+      }
+    },
+    "设置未能保存（%@）；原快捷键保持不变。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t save settings (%@). Your previous shortcut is unchanged."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置未能保存（%@）；原快捷键保持不变。"
+          }
+        }
+      }
+    },
+    "设置未能保存（%@）；呼出方式保持不变。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t save settings (%@). Activation is unchanged."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置未能保存（%@）；呼出方式保持不变。"
+          }
+        }
+      }
+    },
+    "请先允许辅助功能权限": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accessibility Permission Required"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先允许辅助功能权限"
+          }
+        }
+      }
+    },
+    "请先把 MenuSearch 安装到 /Applications，再开启登录时启动。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move MenuSearch to /Applications before enabling Launch at Login."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先把 MenuSearch 安装到 /Applications，再开启登录时启动。"
+          }
+        }
+      }
+    },
+    "请按快捷键…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press a shortcut…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请按快捷键…"
+          }
+        }
+      }
+    },
+    "读取失败，可按 ⌘R 重试": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t read menus. Press ⌘R to retry."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读取失败，可按 ⌘R 重试"
+          }
+        }
+      }
+    },
+    "辅助功能": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accessibility"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助功能"
+          }
+        }
+      }
+    },
+    "运行": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "General"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行"
+          }
+        }
+      }
+    },
+    "这个发行包不能直接替换当前安装。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This release cannot replace the current installation."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这个发行包不能直接替换当前安装。"
+          }
+        }
+      }
+    },
+    "这个命令当前不可用": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This command is currently unavailable"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这个命令当前不可用"
+          }
+        }
+      }
+    },
+    "这个命令当前不可用。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This command is currently unavailable."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这个命令当前不可用。"
+          }
+        }
+      }
+    },
+    "这个命令当前不可用，请刷新菜单。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This command is currently unavailable. Refresh the menu."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这个命令当前不可用，请刷新菜单。"
+          }
+        }
+      }
+    },
+    "退出": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出"
+          }
+        }
+      }
+    },
+    "退出 %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出 %@"
+          }
+        }
+      }
+    },
+    "退出 MenuSearch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit MenuSearch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出 MenuSearch"
+          }
+        }
+      }
+    },
+    "部分菜单暂未响应，请刷新后重试。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some menus aren’t responding. Refresh to try again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "部分菜单暂未响应，请刷新后重试。"
+          }
+        }
+      }
+    },
+    "配置": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置"
+          }
+        }
+      }
+    },
+    "配置已导出。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings exported."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置已导出。"
+          }
+        }
+      }
+    },
+    "配置文件无法读取（%@），当前使用默认设置；保存新设置时原文件会另存备份。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t read the settings file (%@). Default settings are in use. The original file will be backed up when you save."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置文件无法读取（%@），当前使用默认设置；保存新设置时原文件会另存备份。"
+          }
+        }
+      }
+    },
+    "重做": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重做"
+          }
+        }
+      }
+    },
+    "键位登记里 %@ 也声明了 %@（%@）。两边会同时响应，建议换一个。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ also uses %@ in the shortcut registry (%@). Both apps may respond. Choose a different shortcut."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "键位登记里 %@ 也声明了 %@（%@）。两边会同时响应，建议换一个。"
+          }
+        }
+      }
+    },
+    "隐藏 %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐藏 %@"
+          }
+        }
+      }
+    },
+    "隐藏其他": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Others"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐藏其他"
+          }
+        }
+      }
+    },
+    "静默副本不能更改登录项。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A quiet test instance cannot change login settings."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静默副本不能更改登录项。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -31,6 +31,12 @@ enum MenuSearchError: LocalizedError {
     /// The process doing the read is not allowed to use the Accessibility interface.
     case accessibility
     case message(String)
+    var localizedMessage: String {
+        switch self {
+        case .accessibility: return String(localized: "MenuSearch 还没有辅助功能权限。请在「系统设置 › 隐私与安全性 › 辅助功能」中允许 MenuSearch，再重新呼出。")
+        case .message(let text): return text
+        }
+    }
     var errorDescription: String? {
         switch self {
         case .accessibility: return "MenuSearch 还没有辅助功能权限。请在「系统设置 › 隐私与安全性 › 辅助功能」中允许 MenuSearch，再重新呼出。"
@@ -43,10 +49,13 @@ enum MenuSearchError: LocalizedError {
 final class MenuReader: @unchecked Sendable {
     let target: NSRunningApplication
     private let tuning: Tuning
+    private let languageBundle: Bundle
     private var elements: [String: AXUIElement] = [:]
     private var deadline = Date.distantFuture
     private var warnings = Set<String>()
-    init(target: NSRunningApplication, tuning: Tuning = .shared) { self.target = target; self.tuning = tuning }
+    init(target: NSRunningApplication, tuning: Tuning = .shared, languageBundle: Bundle = Env.commandLineBundle) {
+        self.target = target; self.tuning = tuning; self.languageBundle = languageBundle
+    }
 
     static func target(pid: Int32? = nil) throws -> NSRunningApplication {
         if let pid {
@@ -64,7 +73,7 @@ final class MenuReader: @unchecked Sendable {
     private func value(_ element: AXUIElement, _ key: String) -> CFTypeRef? {
         var result: CFTypeRef?
         let code = AXUIElementCopyAttributeValue(element, key as CFString, &result)
-        if code == .cannotComplete { warnings.insert("部分菜单暂未响应，请刷新后重试。") }
+        if code == .cannotComplete { warnings.insert(String(localized: "部分菜单暂未响应，请刷新后重试。", bundle: languageBundle)) }
         return code == .success ? result : nil
     }
     private func children(_ element: AXUIElement) -> [AXUIElement] {
@@ -95,22 +104,23 @@ final class MenuReader: @unchecked Sendable {
 
     func scan() throws -> MenuSnapshot {
         guard AXIsProcessTrusted() else { throw MenuSearchError.accessibility }
-        guard !target.isTerminated else { throw MenuSearchError.message("目标 App 已退出。") }
+        guard !target.isTerminated else { throw MenuSearchError.message(String(localized: "目标 App 已退出。", bundle: languageBundle)) }
         let start = Date()
         deadline = start.addingTimeInterval(tuning.scanDeadlineSeconds)
         warnings.removeAll(); elements.removeAll()
         let app = AXUIElementCreateApplication(target.processIdentifier)
         AXUIElementSetMessagingTimeout(app, Float(tuning.messagingTimeoutSeconds))
         guard let menuValue = value(app, kAXMenuBarAttribute), CFGetTypeID(menuValue) == AXUIElementGetTypeID() else {
-            throw MenuSearchError.message("\(target.localizedName ?? "当前 App") 没有提供可读取的菜单栏。")
+            let name = target.localizedName ?? String(localized: "当前 App", bundle: languageBundle)
+            throw MenuSearchError.message(String(localized: "\(name) 没有提供可读取的菜单栏。", bundle: languageBundle))
         }
         let menu = unsafeBitCast(menuValue, to: AXUIElement.self)
         var items: [MenuCommand] = []
         let seconds = tuning.scanDeadlineSeconds
         let limit = seconds == seconds.rounded() ? String(Int(seconds)) : String(seconds)
         func visit(_ element: AXUIElement, path: [String], indices: [Int], ancestorsEnabled: Bool, depth: Int) {
-            guard Date() < deadline else { warnings.insert("菜单读取超过 \(limit) 秒，结果不完整。请刷新后重试。"); return }
-            guard depth < tuning.maxDepth, items.count < tuning.maxItems else { warnings.insert("菜单结构过大，结果不完整。"); return }
+            guard Date() < deadline else { warnings.insert(String(localized: "菜单读取超过 \(limit) 秒，结果不完整。请刷新后重试。", bundle: languageBundle)); return }
+            guard depth < tuning.maxDepth, items.count < tuning.maxItems else { warnings.insert(String(localized: "菜单结构过大，结果不完整。", bundle: languageBundle)); return }
             let role = value(element, kAXRoleAttribute) as? String ?? ""
             let name = title(element)
             let enabled = ancestorsEnabled && (value(element, kAXEnabledAttribute) as? Bool ?? true)
@@ -134,7 +144,7 @@ final class MenuReader: @unchecked Sendable {
             if tuning.skipTopLevelTitles.contains(name) { continue }
             visit(top, path: [], indices: [index], ancestorsEnabled: true, depth: 0)
         }
-        return MenuSnapshot(ok: true, pid: target.processIdentifier, app: target.localizedName ?? "当前 App",
+        return MenuSnapshot(ok: true, pid: target.processIdentifier, app: target.localizedName ?? String(localized: "当前 App", bundle: languageBundle),
                             bundleID: target.bundleIdentifier ?? "", durationMS: Date().timeIntervalSince(start) * 1000,
                             complete: warnings.isEmpty, warnings: warnings.sorted(), items: items)
     }
@@ -142,14 +152,14 @@ final class MenuReader: @unchecked Sendable {
     /// Keep the actual AX object, and revalidate its owner, title and state before an explicit user action.
     /// Position indices are only identifiers; they are never replayed into a changed menu tree.
     func perform(_ command: MenuCommand) throws {
-        guard command.enabled else { throw MenuSearchError.message("这个命令当前不可用。") }
-        guard !target.isTerminated, let element = elements[command.id] else { throw MenuSearchError.message("菜单已经变化，请刷新后重新选择。") }
+        guard command.enabled else { throw MenuSearchError.message(String(localized: "这个命令当前不可用。", bundle: languageBundle)) }
+        guard !target.isTerminated, let element = elements[command.id] else { throw MenuSearchError.message(String(localized: "菜单已经变化，请刷新后重新选择。", bundle: languageBundle)) }
         var pid: pid_t = 0
         guard AXUIElementGetPid(element, &pid) == .success, pid == target.processIdentifier,
-              title(element) == command.title else { throw MenuSearchError.message("菜单已经变化，请刷新后重新选择。") }
-        guard value(element, kAXEnabledAttribute) as? Bool == true else { throw MenuSearchError.message("这个命令当前不可用，请刷新菜单。") }
+              title(element) == command.title else { throw MenuSearchError.message(String(localized: "菜单已经变化，请刷新后重新选择。", bundle: languageBundle)) }
+        guard value(element, kAXEnabledAttribute) as? Bool == true else { throw MenuSearchError.message(String(localized: "这个命令当前不可用，请刷新菜单。", bundle: languageBundle)) }
         let result = AXUIElementPerformAction(element, kAXPressAction as CFString)
-        guard result == .success else { throw MenuSearchError.message("App 没有执行这个命令（\(result.rawValue)）。请刷新后重试。") }
+        guard result == .success else { throw MenuSearchError.message(String(localized: "App 没有执行这个命令（\(result.rawValue)）。请刷新后重试。", bundle: languageBundle)) }
     }
 }
 

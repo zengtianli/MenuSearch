@@ -58,6 +58,11 @@ enum Env {
     static var build: String { info["CFBundleVersion"] as? String ?? "0" }
     static var resourcesURL: URL? { bundleURL?.appendingPathComponent("Contents/Resources", isDirectory: true) }
 
+    /// Machine-facing output keeps its original Chinese text regardless of the interface language.
+    static var commandLineBundle: Bundle {
+        Bundle.main.path(forResource: "zh-Hans", ofType: "lproj").flatMap(Bundle.init(path:)) ?? .main
+    }
+
     static func ensureSupportDirectory() throws {
         try FileManager.default.createDirectory(at: supportDirectory, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
@@ -66,7 +71,15 @@ enum Env {
 
 struct ProductError: LocalizedError {
     let message: String
-    init(_ message: String) { self.message = message }
+    let localizedMessage: String
+    init(_ message: String, localizedMessage: String? = nil) {
+        self.message = message
+        self.localizedMessage = localizedMessage ?? message
+    }
+    init(localized value: String.LocalizationValue) {
+        message = String(localized: value, bundle: Env.commandLineBundle)
+        localizedMessage = String(localized: value)
+    }
     var errorDescription: String? { message }
 }
 

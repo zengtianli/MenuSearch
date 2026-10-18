@@ -32,7 +32,7 @@ private final class StoreQuietRegistrar: HotkeyRegistering {
 private struct StoreQuietLoginItem: LoginItem {
     var status: String { "unavailable" }
     var enabled: Bool { false }
-    func set(_ on: Bool) throws { throw ProductError("静默副本不能更改登录项。") }
+    func set(_ on: Bool) throws { throw ProductError(localized: "静默副本不能更改登录项。") }
 }
 #endif
 
@@ -44,15 +44,15 @@ final class Coordinator: NSObject {
     private(set) var settings = Settings()
     var registrar: HotkeyRegistering!
     /// Why the stored shortcut is not registered right now.
-    private(set) var hotkeyError: String?
+    private(set) var hotkeyError: ProductError?
     /// The shortcut works, but something else declares the same combination.
-    private(set) var hotkeyWarning: String?
-    var systemConflict: (Combo) -> String? = KeyConflicts.system
+    private(set) var hotkeyWarning: ProductError?
+    var systemConflict: (Combo) -> ProductError? = KeyConflicts.system
     #if APP_STORE
-    var registryConflict: (Combo) -> String? = { _ in nil }
+    var registryConflict: (Combo) -> ProductError? = { _ in nil }
     var declare: (Settings) -> Void = { _ in }
     #else
-    var registryConflict: (Combo) -> String? = { KeyConflicts.skhd($0) ?? KeyConflicts.registered($0) }
+    var registryConflict: (Combo) -> ProductError? = { KeyConflicts.skhd($0) ?? KeyConflicts.registered($0) }
     var declare: (Settings) -> Void = { KeyConflicts.declare($0) }
     #endif
     var terminate: () -> Void = { NSApp.terminate(nil) }
@@ -114,7 +114,7 @@ final class Coordinator: NSObject {
         hotkeyError = nil; hotkeyWarning = nil
         guard settings.mode == .builtin, let combo = settings.hotkey else { return }
         if let reason = systemConflict(combo) { hotkeyError = reason }
-        else if !registrar.register(combo) { hotkeyError = "\(combo.display) 已被其他 App 占用，未能注册。请换一个组合。" }
+        else if !registrar.register(combo) { hotkeyError = ProductError(localized: "\(combo.display) 已被其他 App 占用，未能注册。请换一个组合。") }
         else { hotkeyWarning = registryConflict(combo) }
     }
 
@@ -156,10 +156,10 @@ final class Coordinator: NSObject {
         if let pid { found = NSRunningApplication(processIdentifier: pid) }
         else { found = NSWorkspace.shared.menuBarOwningApplication ?? NSWorkspace.shared.frontmostApplication }
         guard let app = found, !app.isTerminated else {
-            throw ProductError(pid == nil ? "没有找到当前 App。" : "目标 App 已退出。请回到要搜索的 App 再呼出。")
+            throw (pid == nil ? ProductError(localized: "没有找到当前 App。") : ProductError(localized: "目标 App 已退出。请回到要搜索的 App 再呼出。"))
         }
         guard app.processIdentifier != getpid(), app.bundleIdentifier != Env.bundleID else {
-            throw ProductError("现在在前面的是 MenuSearch 自己的窗口。请先切到要搜索的 App，再呼出。")
+            throw ProductError(localized: "现在在前面的是 MenuSearch 自己的窗口。请先切到要搜索的 App，再呼出。")
         }
         return app
     }
@@ -184,7 +184,7 @@ final class Coordinator: NSObject {
             return ["ok": true, "action": "shown", "target_pid": Int(target.processIdentifier),
                     "target": target.localizedName ?? "", "target_bundle_id": target.bundleIdentifier ?? ""]
         } catch {
-            panel.present(message: error.localizedDescription)
+            panel.present(message: (error as? ProductError)?.localizedMessage ?? error.localizedDescription)
             return ["ok": false, "action": "message_shown", "error": error.localizedDescription]
         }
     }
@@ -206,24 +206,24 @@ final class Coordinator: NSObject {
 
     // MARK: Changing how it is summoned
 
-    private func saved(_ next: Settings, notice: String?) -> Result<String?, ProductError> {
+    private func saved(_ next: Settings, notice: ProductError?) -> Result<String?, ProductError> {
         settings = next
         hotkeyError = nil; hotkeyWarning = notice
         declare(settings)
         onChange?()
-        return .success(notice)
+        return .success(notice?.message)
     }
 
     /// nil clears the shortcut. A refused combination leaves the previous one registered and stored.
     func setHotkey(_ combo: Combo?) -> Result<String?, ProductError> {
         defer { updatePresence() }
         let previous = registrar.combo
-        var notice: String?
+        var notice: ProductError?
         if let combo {
-            if let reason = systemConflict(combo) { return .failure(ProductError(reason)) }
+            if let reason = systemConflict(combo) { return .failure(reason) }
             guard registrar.register(combo) else {
                 if let previous { _ = registrar.register(previous) }
-                return .failure(ProductError("\(combo.display) 已被其他 App 占用，未能注册；原快捷键保持不变。"))
+                return .failure(ProductError(localized: "\(combo.display) 已被其他 App 占用，未能注册；原快捷键保持不变。"))
             }
             notice = registryConflict(combo)
             // In external mode the combination is only checked and stored for later.
@@ -233,7 +233,7 @@ final class Coordinator: NSObject {
         do { try store.save(next) } catch {
             registrar.unregister()
             if let previous { _ = registrar.register(previous) }
-            return .failure(ProductError("设置未能保存（\(error.localizedDescription)）；原快捷键保持不变。"))
+            return .failure(ProductError(localized: "设置未能保存（\(error.localizedDescription)）；原快捷键保持不变。"))
         }
         return saved(next, notice: notice)
     }
@@ -241,19 +241,19 @@ final class Coordinator: NSObject {
     /// Stops the old shortcut source, then starts the new one; if the new one cannot start, the old one comes back.
     func setMode(_ mode: Mode) -> Result<String?, ProductError> {
         #if APP_STORE
-        guard mode == .builtin else { return .failure(ProductError("Mac App Store 版使用内置快捷键呼出。")) }
+        guard mode == .builtin else { return .failure(ProductError(localized: "Mac App Store 版使用内置快捷键呼出。")) }
         #endif
         guard mode != settings.mode else { return .success(nil) }
         defer { updatePresence() }
-        var notice: String?
+        var notice: ProductError?
         switch mode {
         case .external:
             registrar.unregister()
         case .builtin:
             if let combo = settings.hotkey {
-                if let reason = systemConflict(combo) { return .failure(ProductError(reason + " 呼出方式保持为外部呼出。")) }
+                if let reason = systemConflict(combo) { return .failure(ProductError(reason.message + String(localized: " 呼出方式保持为外部呼出。", bundle: Env.commandLineBundle), localizedMessage: reason.localizedMessage + String(localized: " 呼出方式保持为外部呼出。"))) }
                 guard registrar.register(combo) else {
-                    return .failure(ProductError("\(combo.display) 已被其他 App 占用，未能注册；呼出方式保持为外部呼出，请先换一个快捷键。"))
+                    return .failure(ProductError(localized: "\(combo.display) 已被其他 App 占用，未能注册；呼出方式保持为外部呼出，请先换一个快捷键。"))
                 }
                 notice = registryConflict(combo)
             }
@@ -262,23 +262,23 @@ final class Coordinator: NSObject {
         do { try store.save(next) } catch {
             registrar.unregister()
             if settings.mode == .builtin, let combo = settings.hotkey { _ = registrar.register(combo) }
-            return .failure(ProductError("设置未能保存（\(error.localizedDescription)）；呼出方式保持不变。"))
+            return .failure(ProductError(localized: "设置未能保存（\(error.localizedDescription)）；呼出方式保持不变。"))
         }
         if mode == .external, login.enabled {
             try? login.set(false)
-            notice = "已关闭登录时启动：外部呼出方式下 MenuSearch 不常驻。"
+            notice = ProductError(localized: "已关闭登录时启动：外部呼出方式下 MenuSearch 不常驻。")
         }
         return saved(next, notice: notice)
     }
 
     func setLogin(_ on: Bool) -> Result<String?, ProductError> {
         if on {
-            guard settings.mode == .builtin else { return .failure(ProductError("外部呼出方式下 MenuSearch 不常驻，不需要登录时启动。")) }
+            guard settings.mode == .builtin else { return .failure(ProductError(localized: "外部呼出方式下 MenuSearch 不常驻，不需要登录时启动。")) }
             guard testing || Env.bundleURL?.path == Env.installedBundlePath else {
-                return .failure(ProductError("请先把 MenuSearch 安装到 /Applications，再开启登录时启动。"))
+                return .failure(ProductError(localized: "请先把 MenuSearch 安装到 /Applications，再开启登录时启动。"))
             }
         }
-        do { try login.set(on) } catch { return .failure(ProductError("登录时启动未能更改：\(error.localizedDescription)")) }
+        do { try login.set(on) } catch { return .failure(ProductError(localized: "登录时启动未能更改：\(error.localizedDescription)")) }
         onChange?()
         return .success(nil)
     }
@@ -289,8 +289,8 @@ final class Coordinator: NSObject {
         ["ok": true, "running": true, "pid": Int(getpid()), "executable": Env.executableURL.path,
          "version": Env.version, "build": Env.build, "mode": settings.mode.rawValue,
          "hotkey": settings.hotkey.map { ["display": $0.display, "key": $0.canonical] as [String: Any] } ?? NSNull(),
-         "hotkey_registered": registrar.combo != nil, "hotkey_error": hotkeyError ?? NSNull(),
-         "hotkey_warning": hotkeyWarning ?? NSNull(), "panel_visible": panelActive, "settings_visible": settingsVisible,
+         "hotkey_registered": registrar.combo != nil, "hotkey_error": hotkeyError?.message ?? NSNull(),
+         "hotkey_warning": hotkeyWarning?.message ?? NSNull(), "panel_visible": panelActive, "settings_visible": settingsVisible,
          "accessibility": AXIsProcessTrusted(), "login_item": login.status, "stays_resident": staysResident,
          "settings_error": store.loadError ?? NSNull(), "last_show": lastShow ?? NSNull(), "presence": presence(),
          "icloud_sync": configuration?.enabled ?? false, "upgrade_error": upgradeError ?? NSNull()]
@@ -370,9 +370,9 @@ final class Coordinator: NSObject {
                 guard let self else { return }
                 do {
                     let release = try checked.get()
-                    guard release.isNewer(than: Env.version, build: Env.build) else { throw ProductError("没有比当前更新的正式版本。") }
+                    guard release.isNewer(than: Env.version, build: Env.build) else { throw ProductError(localized: "没有比当前更新的正式版本。") }
                     guard AppUpgradeInstaller.supportsReplacement(release: release, currentBundle: bundle) else {
-                        throw ProductError("这个发行包不能直接替换当前安装。")
+                        throw ProductError(localized: "这个发行包不能直接替换当前安装。")
                     }
                     AppUpgradeInstaller.prepare(release: release, currentBundle: bundle) { prepared in
                         DispatchQueue.main.async {
@@ -426,7 +426,7 @@ final class Coordinator: NSObject {
         #else
         AppLifecycleUI.shared.show()
         #endif
-        if settingsWindow == nil, let window = NSApp.windows.first(where: { $0.title == "\(Env.productName) 设置" }) {
+        if settingsWindow == nil, let window = NSApp.windows.first(where: { $0.title == "\(Env.productName) 设置" || $0.title == String(localized: "\(Env.productName) 设置") }) {
             settingsWindow = window
             NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in
                 self?.settingsClosed()
@@ -483,11 +483,11 @@ enum MenuBarMenu {
 
     static func fill(_ menu: NSMenu, hotkey: Combo?, target: AnyObject?) {
         menu.removeAllItems()
-        let search = NSMenuItem(title: "搜索当前 App 的菜单", action: #selector(AppDelegate.searchFrontApplication(_:)), keyEquivalent: "")
+        let search = NSMenuItem(title: String(localized: "搜索当前 App 的菜单"), action: #selector(AppDelegate.searchFrontApplication(_:)), keyEquivalent: "")
         // Shown as a reminder of the shortcut; it only acts while this menu is open.
         if let (key, mask) = hotkey?.menuEquivalent { search.keyEquivalent = key; search.keyEquivalentModifierMask = mask }
-        let settings = NSMenuItem(title: "设置…", action: #selector(AppDelegate.showSettings(_:)), keyEquivalent: ",")
-        let quit = NSMenuItem(title: "退出 \(Env.productName)", action: #selector(AppDelegate.quit(_:)), keyEquivalent: "q")
+        let settings = NSMenuItem(title: String(localized: "设置…"), action: #selector(AppDelegate.showSettings(_:)), keyEquivalent: ",")
+        let quit = NSMenuItem(title: String(localized: "退出 \(Env.productName)"), action: #selector(AppDelegate.quit(_:)), keyEquivalent: "q")
         for item in [search, .separator(), settings, .separator(), quit] {
             if !item.isSeparatorItem { item.target = target }
             menu.addItem(item)
@@ -588,7 +588,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation, 
     }
     func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
         let menu = NSMenu()
-        menu.addItem(withTitle: "设置…", action: #selector(showSettings(_:)), keyEquivalent: "").target = self
+        menu.addItem(withTitle: String(localized: "设置…"), action: #selector(showSettings(_:)), keyEquivalent: "").target = self
         return menu
     }
 
@@ -601,7 +601,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation, 
                 ?? NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: Env.productName)
             image?.isTemplate = true
             item.button?.image = image
-            item.button?.toolTip = "\(Env.productName) · 菜单搜索"
+            item.button?.toolTip = String(localized: "\(Env.productName) · 菜单搜索")
             let menu = NSMenu()
             menu.delegate = self
             item.menu = menu
@@ -635,30 +635,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation, 
     private func buildMenu() -> NSMenu {
         let main = NSMenu()
         let application = NSMenu()
-        application.addItem(withTitle: "关于 \(Env.productName)", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        application.addItem(withTitle: String(localized: "关于 \(Env.productName)"), action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         application.addItem(.separator())
-        application.addItem(withTitle: "设置…", action: #selector(showSettings(_:)), keyEquivalent: ",").target = self
+        application.addItem(withTitle: String(localized: "设置…"), action: #selector(showSettings(_:)), keyEquivalent: ",").target = self
         application.addItem(.separator())
-        application.addItem(withTitle: "隐藏 \(Env.productName)", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
-        let others = application.addItem(withTitle: "隐藏其他", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
+        application.addItem(withTitle: String(localized: "隐藏 \(Env.productName)"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        let others = application.addItem(withTitle: String(localized: "隐藏其他"), action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
         others.keyEquivalentModifierMask = [.command, .option]
-        application.addItem(withTitle: "全部显示", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: "")
+        application.addItem(withTitle: String(localized: "全部显示"), action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: "")
         application.addItem(.separator())
-        let quit = NSMenuItem(title: "退出 \(Env.productName)", action: #selector(quit(_:)), keyEquivalent: "q")
+        let quit = NSMenuItem(title: String(localized: "退出 \(Env.productName)"), action: #selector(quit(_:)), keyEquivalent: "q")
         quit.target = self
         application.addItem(quit)
-        let edit = NSMenu(title: "编辑")
-        edit.addItem(withTitle: "撤销", action: Selector(("undo:")), keyEquivalent: "z")
-        let redo = edit.addItem(withTitle: "重做", action: Selector(("redo:")), keyEquivalent: "z")
+        let edit = NSMenu(title: String(localized: "编辑"))
+        edit.addItem(withTitle: String(localized: "撤销"), action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = edit.addItem(withTitle: String(localized: "重做"), action: Selector(("redo:")), keyEquivalent: "z")
         redo.keyEquivalentModifierMask = [.command, .shift]
         edit.addItem(.separator())
-        edit.addItem(withTitle: "剪切", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        edit.addItem(withTitle: "拷贝", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        edit.addItem(withTitle: "粘贴", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        edit.addItem(withTitle: "全选", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
-        let window = NSMenu(title: "窗口")
-        window.addItem(withTitle: "关闭", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-        window.addItem(withTitle: "最小化", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        edit.addItem(withTitle: String(localized: "剪切"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: String(localized: "拷贝"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: String(localized: "粘贴"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: String(localized: "全选"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        let window = NSMenu(title: String(localized: "窗口"))
+        window.addItem(withTitle: String(localized: "关闭"), action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        window.addItem(withTitle: String(localized: "最小化"), action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
         for menu in [application, edit, window] {
             let item = NSMenuItem()
             item.submenu = menu

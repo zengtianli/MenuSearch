@@ -7,6 +7,7 @@ enum Mode: String, CaseIterable {
     /// skhd, Karabiner or another launcher runs `menusearch show`; MenuSearch registers nothing and does not stay.
     case external
     var title: String { self == .builtin ? "内置快捷键" : "外部呼出" }
+    var localizedTitle: String { self == .builtin ? String(localized: "内置快捷键") : String(localized: "外部呼出") }
 }
 
 /// One key with modifiers, stored by physical key code so it survives keyboard layout changes.
@@ -117,10 +118,10 @@ struct Settings: Equatable {
     static func validate(field key: String, value: Any) throws {
         switch key {
         case "mode":
-            guard let text = value as? String, Mode(rawValue: text) != nil else { throw ProductError("呼出方式只能是 builtin 或 external。") }
+            guard let text = value as? String, Mode(rawValue: text) != nil else { throw ProductError(localized: "呼出方式只能是 builtin 或 external。") }
         case "hotkey":
-            guard value is NSNull || Combo(json: value) != nil else { throw ProductError("快捷键配置无效。") }
-        default: throw ProductError("未知的配置项：\(key)")
+            guard value is NSNull || Combo(json: value) != nil else { throw ProductError(localized: "快捷键配置无效。") }
+        default: throw ProductError(localized: "未知的配置项：\(key)")
         }
     }
 }
@@ -130,21 +131,23 @@ struct Settings: Equatable {
 final class SettingsStore {
     let url: URL
     /// Why the stored file could not be used; the defaults are in effect and the file is kept until the next save.
-    private(set) var loadError: String?
+    private var loadProblem: ProductError?
+    var loadError: String? { loadProblem?.message }
+    var localizedLoadError: String? { loadProblem?.localizedMessage }
     init(url: URL = Env.settingsURL) { self.url = url }
 
     func load() -> Settings {
-        loadError = nil
+        loadProblem = nil
         guard FileManager.default.fileExists(atPath: url.path) else { return Settings() }
         do {
             let object = try Self.object(url)
             var settings = Settings()
             if let raw = object["mode"] {
-                guard let text = raw as? String, let mode = Mode(rawValue: text) else { throw ProductError("呼出方式无效") }
+                guard let text = raw as? String, let mode = Mode(rawValue: text) else { throw ProductError(localized: "呼出方式无效") }
                 settings.mode = mode
             }
             if let raw = object["hotkey"], !(raw is NSNull) {
-                guard let combo = Combo(json: raw) else { throw ProductError("快捷键无效") }
+                guard let combo = Combo(json: raw) else { throw ProductError(localized: "快捷键无效") }
                 settings.hotkey = combo
             }
             #if APP_STORE
@@ -153,7 +156,11 @@ final class SettingsStore {
             #endif
             return settings
         } catch {
-            loadError = "配置文件无法读取（\(error.localizedDescription)），当前使用默认设置；保存新设置时原文件会另存备份。"
+            func problem(_ reason: String) -> ProductError {
+                ProductError(localized: "配置文件无法读取（\(reason)），当前使用默认设置；保存新设置时原文件会另存备份。")
+            }
+            loadProblem = ProductError(problem(error.localizedDescription).message,
+                localizedMessage: problem((error as? ProductError)?.localizedMessage ?? error.localizedDescription).localizedMessage)
             return Settings()
         }
     }
@@ -176,13 +183,13 @@ final class SettingsStore {
         let data = try JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys])
         try data.write(to: url, options: .atomic)
         try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
-        loadError = nil
+        loadProblem = nil
     }
 
     private static func object(_ url: URL) throws -> [String: Any] {
         let data = try Data(contentsOf: url)
         guard data.count <= 1_048_576, let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw ProductError("不是有效的设置文件")
+            throw ProductError(localized: "不是有效的设置文件")
         }
         return object
     }
