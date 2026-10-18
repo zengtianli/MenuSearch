@@ -20,6 +20,7 @@ for arg in "$@"; do
     *) [ -z "$APP" ] || usage; APP="$arg" ;;
   esac
 done
+chapter local-install check --app menu-search --direct --json
 APP="${APP:-$PWD/build/MenuSearch.app}"
 DEST=/Applications/MenuSearch.app
 CLI_TARGET="$DEST/Contents/MacOS/MenuSearch"
@@ -85,6 +86,7 @@ if [ -e "$DEST" ]; then
 fi
 trap restore ERR
 ditto "$APP" "$DEST"
+chapter local-install check --app menu-search --direct --require-installed --json
 codesign --verify --deep --strict "$DEST"
 cmp -s "$NEW" "$CLI_TARGET"
 trap - ERR

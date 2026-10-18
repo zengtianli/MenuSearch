@@ -16,6 +16,7 @@ key_scripts:
 depends_on: []
 # 交付流程（SOP）事实，字段说明见 ~/Apps/chapter/engine/app_sop.py 的 SOP_KEYS。
 sop:
+  local_install: testflight
   platforms:
     mac: {}
     iphone:
