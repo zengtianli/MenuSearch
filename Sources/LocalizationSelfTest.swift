@@ -17,7 +17,9 @@ enum LocalizationSelfTest {
     }
 
     private static func chinese(_ value: String) -> Bool {
-        value.range(of: "\\p{Han}", options: .regularExpression) != nil
+        // Ideographs and CJK/full-width punctuation. Not \p{Han}: ICU matches it by script extension, so a plain
+        // "·" separator would count as Chinese.
+        value.range(of: "[\\u3000-\\u303F\\u3400-\\u4DBF\\u4E00-\\u9FFF\\uFF00-\\uFFEF]", options: .regularExpression) != nil
     }
 
     static func check(panel: PanelController, coordinator: Coordinator, out: URL) throws {

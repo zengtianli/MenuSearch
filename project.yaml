@@ -74,6 +74,13 @@ sop:
     privacy: python3 scripts/accept/run.py privacy
     native_ui: python3 scripts/accept/run.py native_ui
   ui_self_test_flag: --self-test
+  # 中英界面：开发语言英文；截图先 bash build.sh --quick 出候选，再由产品自己的离屏验收（隔离目录、禁止激活策略、固定演示菜单）写到 perf/acceptance/l10n/<lang>/。
+  localization:
+    languages: [en, zh-Hans]
+    development: en
+    shots:
+      command: ["sh", "-c", "MENUSEARCH_L10N_APP=build/quick/MenuSearch.app \"$HOME/Dev/.venv/bin/python\" -m pytest scripts/accept/test_l10n.py -q -p no:cacheprovider"]
+      allow_chinese: ["菜单搜索", "写笔记", "文件"]
   source:
   - Sources/**
   - Resources/**

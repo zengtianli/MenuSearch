@@ -2,6 +2,8 @@
 # Builds build/MenuSearch.app: logic tests first, then the application, then its offscreen self-test.
 #   bash build.sh              build, sign, self-test
 #   bash build.sh --test-only  logic tests only
+#   bash build.sh --quick      logic tests, build and sign into build/quick/MenuSearch.app for iterating and the
+#                              offscreen language checks; skips the timed self-test, never replaces build/MenuSearch.app
 # MENUSEARCH_OUT=DIR puts every product of the build under DIR instead of build/ (the acceptance checks use this
 # for their own ad-hoc signed copy).
 # Nothing is installed, launched on screen or published. Signing identity: $CODESIGN_IDENTITY, else the first line
@@ -48,8 +50,8 @@ except lane.Busy as error:
     sys.exit(75)
 PY
 }
-if [ "$#" -gt 1 ] || { [ "$#" -eq 1 ] && [ "$1" != '--test-only' ]; }; then
-  echo 'Usage: bash build.sh [--test-only]' >&2
+if [ "$#" -gt 1 ] || { [ "$#" -eq 1 ] && [ "$1" != '--test-only' ] && [ "$1" != '--quick' ]; }; then
+  echo 'Usage: bash build.sh [--test-only|--quick]' >&2
   exit 2
 fi
 if [ "$(uname -s)" != Darwin ] || [ "$(uname -m)" != arm64 ]; then
@@ -104,6 +106,15 @@ else
 fi
 codesign --verify --deep --strict "$APP"
 test "$(lipo -archs "$APP/Contents/MacOS/MenuSearch")" = arm64
+
+# Quick build: a separate candidate for iteration; the release candidate below still needs the timed self-test.
+if [ "${1:-}" = '--quick' ]; then
+  rm -rf "$OUT/quick/MenuSearch.app"
+  mkdir -p "$OUT/quick"
+  mv "$APP" "$OUT/quick/MenuSearch.app"
+  echo "Built (quick): $OUT/quick/MenuSearch.app ($("$OUT/quick/MenuSearch.app/Contents/MacOS/MenuSearch" version))"
+  exit 0
+fi
 
 # The production views and logic, offscreen, in a throwaway support directory.
 rm -rf "$OUT/self-test"

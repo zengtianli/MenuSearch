@@ -562,6 +562,22 @@
         }
       }
     },
+    "写笔记": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写笔记"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write Note"
+          }
+        }
+      }
+    },
     "刷新": {
       "extractionState": "manual",
       "localizations": {
@@ -1255,6 +1271,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "未知的配置项：%@"
+          }
+        }
+      }
+    },
+    "未说明": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no description"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未说明"
           }
         }
       }

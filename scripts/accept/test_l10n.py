@@ -33,6 +33,11 @@ def test_product_views_follow_system_language_without_untranslated_chinese(langu
     assert report["ok"] and report["offscreen"] and report["cli_error_preserved"]
     if language == "en":
         assert report["remaining_product_chinese"] == []
+        # The shared settings/update layer is bilingual too; English shows none of its Chinese.
+        assert report["shared_layer_chinese"] == []
+    else:
+        # zh-Hans still resolves to the Chinese strings, not the English development language.
+        assert len(report["remaining_product_chinese"]) * 2 > report["product_text_count"] // 4
     info = plistlib.loads((APP / "Contents/Info.plist").read_bytes())
     assert info["CFBundleDevelopmentRegion"] == "en"
     assert set(info["CFBundleLocalizations"]) == {"en", "zh-Hans"}
