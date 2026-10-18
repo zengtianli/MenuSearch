@@ -33,6 +33,33 @@ def input_files(patterns):
                 ('Tests/', 'scripts/accept/', 'scripts/perf/', 'handoffs/', 'perf/'))}
 
 
+def code_binding():
+    """Chapter owns production input coverage; its current-build verdict also checks the installed receipt."""
+    digest = os.environ.get('SOP_CODE_BINDING_SHA256', '')
+    valid = len(digest) == 64 and all(c in '0123456789abcdef' for c in digest)
+    return {'sha256': digest, 'current': valid and os.environ.get('SOP_BUILD_CURRENT') == '1'}
+
+
+def source_snapshot():
+    # Detect mutations during this run, without reinterpreting a receipt's historical test/script inputs.
+    config = json.loads(os.environ.get('SOP_CONFIG', '{}'))
+    patterns = config.get('source') or ['Sources/**', 'Resources/**', 'Info.plist',
+                                      'icon/AppIcon.icns', 'build.sh', 'LICENSE']
+    return {name: sha(ROOT / name) for name in input_files(patterns)}
+
+
+def artifact_matches(info, checksum, artifact):
+    return (info['CFBundleIdentifier'] == artifact['bundle_id'] == PRODUCT
+            and info['CFBundleShortVersionString'] == artifact['version']
+            and str(info['CFBundleVersion']) == str(artifact['build'])
+            and checksum == artifact['sha256'])
+
+
+def signature_valid(app):
+    return subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)],
+                          capture_output=True, timeout=20).returncode == 0
+
+
 def production_snapshot():
     # Hash only; never copy the user's preferences or menu content into acceptance output.
     prefs = subprocess.run(['defaults', 'export', PRODUCT, '-'], capture_output=True, timeout=10)
@@ -67,26 +94,21 @@ def main():
     artifact = receipt['artifact']
     installed_info = plistlib.loads((selected_app / 'Contents/Info.plist').read_bytes())
     installed_sha = sha(selected_app / artifact['executable'])
-    # Test, acceptance and measurement inputs can change without changing the installed app.
-    # Apply the same production scope to recorded files and current inputs, including the final recheck.
-    source_files = {name: checksum for name, checksum in receipt['source']['files'].items()
-                    if not name.startswith(('Tests/', 'scripts/accept/', 'scripts/perf/', 'handoffs/', 'perf/'))}
-    source_mismatches = [name for name, checksum in source_files.items()
-                         if not (ROOT / name).is_file() or sha(ROOT / name) != checksum]
-    current_inputs = input_files(receipt['source']['input_globs'])
-    source_mismatches.extend('unrecorded:' + name for name in sorted(current_inputs - set(source_files)))
-    source_mismatches.extend('missing:' + name for name in sorted(set(source_files) - current_inputs))
+    code = code_binding()
+    source_files = source_snapshot()
+    signature_ok = signature_valid(selected_app)
+    info_sha = sha(selected_app / 'Contents/Info.plist')
     binding = {'validation_scope': 'candidate' if candidate else 'installed', 'artifact_path': str(selected_app),
                'receipt_path': str(receipt_path), 'installed_path': str(APP), 'installed_executable_sha256': before['executable_sha256'],
                'bundle_id': installed_info['CFBundleIdentifier'],
                'version': installed_info['CFBundleShortVersionString'], 'build': installed_info['CFBundleVersion'],
                'executable_sha256': installed_sha, 'receipt_sha256': sha(receipt_path),
-               'source_sha256': receipt['source']['sha256'], 'source_files': source_files,
-               'source_mismatches': source_mismatches}
-    bound = (installed_info['CFBundleIdentifier'] == artifact['bundle_id'] == PRODUCT
-             and installed_info['CFBundleShortVersionString'] == artifact['version']
-             and str(installed_info['CFBundleVersion']) == str(artifact['build'])
-             and installed_sha == artifact['sha256'] and not source_mismatches)
+               'code_binding_sha256': code['sha256'], 'build_current': code['current'],
+               'source_files': source_files, 'signature_valid': signature_ok, 'info_sha256': info_sha}
+    # Chapter's verdict covers the installed binary; a candidate is valid here only if it is the same binary.
+    candidate_current = not candidate or installed_sha == before['executable_sha256']
+    bound = (artifact_matches(installed_info, installed_sha, artifact)
+             and signature_ok and code['current'] and candidate_current)
     for feature in FEATURES:
         checks[feature][feature + '.artifact_and_source_binding'] = bound is True
 
@@ -100,7 +122,8 @@ def main():
     error = None
     try:
         if not bound:
-            raise ValueError('Installed executable/version or current source does not match its build receipt; no rebuild attempted')
+            raise ValueError('Artifact/version/signature or Chapter production-code binding is not current '
+                             f"(SOP_BUILD_CURRENT={int(code['current'])}); no rebuild attempted")
         shutil.copytree(selected_app, clone, symlinks=True)
         binding['copy_before_sign_sha256'] = sha(executable)
         for feature in FEATURES:
@@ -321,8 +344,9 @@ def main():
         checks[feature][feature + '.production_unchanged'] = before == after
         checks[feature][feature + '.binding_still_current'] = (sha(selected_app / artifact['executable']) == installed_sha
             and sha(receipt_path) == binding['receipt_sha256']
-            and input_files(receipt['source']['input_globs']) == set(source_files)
-            and all((ROOT / name).is_file() and sha(ROOT / name) == checksum for name, checksum in source_files.items()))
+            and sha(selected_app / 'Contents/Info.plist') == info_sha
+            and code_binding() == code and code['current']
+            and source_snapshot() == source_files and signature_valid(selected_app))
     upstream = {'path': str((ui_dir / 'self-test.json').relative_to(ROOT)),
                 'sha256': sha(ui_dir / 'self-test.json')} if (ui_dir / 'self-test.json').is_file() else None
     features = {}

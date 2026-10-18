@@ -41,7 +41,11 @@ def build():
     """The cached acceptance copy of the current source; built under a lock so parallel checks share it."""
     (ROOT / "build/accept").mkdir(parents=True, exist_ok=True)
     with open(ROOT / "build/accept/.lock", "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("Acceptance build is busy; returning to the jobs queue", file=sys.stderr)
+            raise SystemExit(75)
         if VENDOR.is_file():  # the build would do this; doing it first keeps the hash stable
             subprocess.run([sys.executable, str(VENDOR), "--platform", "mac", "--target-source-dir", str(ROOT / "Sources")],
                            check=True, capture_output=True)
@@ -52,6 +56,8 @@ def build():
                                     env={**os.environ, "MENUSEARCH_OUT": str(cache), "CODESIGN_IDENTITY": "-"})
             if result.returncode or not exe.exists():
                 sys.stderr.write(result.stdout[-3000:] + result.stderr[-3000:])
+                if result.returncode == 75:
+                    raise SystemExit(75)
                 raise SystemExit("build failed")
     return cache, exe
 

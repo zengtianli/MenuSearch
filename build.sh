@@ -9,6 +9,45 @@
 # permission again after every rebuild; a stable identity keeps it.
 set -euo pipefail
 cd "$(dirname "$0")"
+# Compilation uses the shared parallel slots; only the timed self-test needs a quiet window.
+# Outside the managed workstation the scheduler is optional, so public builds still use system tools alone.
+run_phase() {
+  python3 - "$@" <<'PY'
+import importlib.util
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+phase, *command = sys.argv[1:]
+module = Path(os.environ.get("SIM_LANE_SCRIPT") or Path.home() / "Dev/tools/dev/lib/tools/macapp/ios/sim_lane.py")
+if not module.is_file():
+    if os.environ.get("SOP_APP_ID"):
+        sys.exit("Shared build/measurement scheduler is unavailable")
+    sys.exit(subprocess.call(command))
+spec = importlib.util.spec_from_file_location("sim_lane", module)
+lane = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = lane
+spec.loader.exec_module(lane)
+label = f"menusearch:{phase}:{os.getpid()}"
+try:
+    if phase == "compile":
+        with lane.BuildSlot(label, wait=0):
+            code = subprocess.call(command)
+    else:
+        locks = lane.lock_chain(label)
+        try:
+            lane.acquire(locks, None, lock_wait=0, load_wait=0, max_load=lane.max_load_default())
+            code = subprocess.call(command)
+        finally:
+            for lock in reversed(locks):
+                lock.release()
+    sys.exit(code)
+except lane.Busy as error:
+    print(f"Deferred {phase}: {error}", file=sys.stderr)
+    sys.exit(75)
+PY
+}
 if [ "$#" -gt 1 ] || { [ "$#" -eq 1 ] && [ "$1" != '--test-only' ]; }; then
   echo 'Usage: bash build.sh [--test-only]' >&2
   exit 2
@@ -28,7 +67,7 @@ SDK="$(xcrun --sdk macosx --show-sdk-path)"
 COMPILER=(xcrun swiftc -swift-version 5 -O -whole-module-optimization -target arm64-apple-macos14.0 -sdk "$SDK")
 OUT="${MENUSEARCH_OUT:-$PWD/build}"
 mkdir -p build "$OUT"
-"${COMPILER[@]}" Sources/Env.swift Sources/MenuCore.swift Sources/Settings.swift Sources/Control.swift Tests/main.swift -o "$OUT/tests"
+run_phase compile "${COMPILER[@]}" Sources/Env.swift Sources/MenuCore.swift Sources/Settings.swift Sources/Control.swift Tests/main.swift -o "$OUT/tests"
 "$OUT/tests"
 if [ "${1:-}" = '--test-only' ]; then exit 0; fi
 
@@ -51,7 +90,7 @@ SOURCES=()
 while IFS= read -r line; do SOURCES+=("$line"); done < <(find Sources -type f -name '*.swift' | LC_ALL=C sort)
 # The only network client is the shared update check (Sources/AppLifecycle*.swift): an HTTPS request to GitHub
 # Releases when the user asks for updates. scripts/accept/run.py privacy holds the product's own sources to that.
-"${COMPILER[@]}" -Xlinker -dead_strip "${SOURCES[@]}" -o "$APP/Contents/MacOS/MenuSearch"
+run_phase compile "${COMPILER[@]}" -Xlinker -dead_strip "${SOURCES[@]}" -o "$APP/Contents/MacOS/MenuSearch"
 strip -x "$APP/Contents/MacOS/MenuSearch"
 
 IDENTITY="${CODESIGN_IDENTITY:-}"
@@ -68,8 +107,13 @@ test "$(lipo -archs "$APP/Contents/MacOS/MenuSearch")" = arm64
 # The production views and logic, offscreen, in a throwaway support directory.
 rm -rf "$OUT/self-test"
 MENUSEARCH_SUPPORT_DIR="$SCRATCH/support" APP_LIFECYCLE_SUPPORT_DIR="$SCRATCH/lifecycle" \
-  "$APP/Contents/MacOS/MenuSearch" --self-test --output "$OUT/self-test" > "$OUT/self-test.log" || {
+  run_phase measure "$APP/Contents/MacOS/MenuSearch" --self-test --output "$OUT/self-test" > "$OUT/self-test.log" || {
+  code=$?
   cat "$OUT/self-test.log" >&2
+  if [ "$code" = 75 ]; then
+    echo 'Offscreen self-test deferred; the previous MenuSearch.app was not replaced.' >&2
+    exit 75
+  fi
   echo 'Offscreen self-test failed; the previous MenuSearch.app was not replaced.' >&2
   exit 1
 }
