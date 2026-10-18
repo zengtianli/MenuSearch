@@ -31,10 +31,16 @@ def test_product_views_follow_system_language_without_untranslated_chinese(langu
     report = json.loads((out / "l10n.json").read_text())
     assert report["language"] == language
     assert report["ok"] and report["offscreen"] and report["cli_error_preserved"]
+    assert report["language_controls_present"] and report["language_preferences_work"]
+    assert report["language_options"] == ["Follow System" if language == "en" else "跟随系统", "简体中文", "English"]
     if language == "en":
         assert report["remaining_product_chinese"] == []
-        # The shared settings/update layer is bilingual too; English shows none of its Chinese.
-        assert report["shared_layer_chinese"] == []
+        # The native language selector deliberately names Chinese in Chinese. Exempt that
+        # exact label only while the shared module is byte-for-byte identical to its source.
+        vendor = Path(os.environ.get("APP_LIFECYCLE_VENDOR") or Path.home() / "Dev/tools/dev/lib/tools/macapp/swift-shared/vendor-lifecycle.py")
+        subprocess.run(["python3", str(vendor), "--platform", "mac", "--cli",
+                        "--target-source-dir", str(ROOT / "Sources"), "--check"], check=True)
+        assert report["shared_layer_chinese"] == ["简体中文"]
     else:
         # zh-Hans still resolves to the Chinese strings, not the English development language.
         assert len(report["remaining_product_chinese"]) * 2 > report["product_text_count"] // 4

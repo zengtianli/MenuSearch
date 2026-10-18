@@ -380,6 +380,10 @@ enum LifecycleText {
     ]
 
     private static let messages: [String: String] = [
+        // AppShortcuts errors (thrown in Chinese so CLI output stays byte-identical)
+        "应用快捷键须为 ⌘ 加单个字母或数字，可另加 ⇧、⌥、⌃。": "An app shortcut must be ⌘ plus one letter or digit, optionally with ⇧, ⌥ or ⌃.",
+        "此组合保留给系统或编辑菜单，请选择其他快捷键。": "This combination is reserved for the system or the Edit menu; choose another shortcut.",
+        "此应用菜单已使用这个组合，原快捷键保持不变。": "This app's menu already uses this combination; the original shortcut is unchanged.",
         // AppConfiguration status sentences
         "iCloud 配置同步已关闭": "iCloud settings sync is off",
         "等待 iCloud 配置同步": "Waiting for iCloud settings sync",

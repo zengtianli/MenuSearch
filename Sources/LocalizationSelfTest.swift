@@ -67,13 +67,36 @@ enum LocalizationSelfTest {
             guard conflict.message.contains("未说明") else { throw ProductError("CLI fallback text changed.") }
         }
         let remaining = strings.filter(chinese)
-        let shared = NSApp.windows.filter { $0 !== panel.panel }.flatMap { $0.contentView.map(text) ?? [] }.filter(chinese)
+        let settingsText = NSApp.windows.filter { $0 !== panel.panel }.flatMap { $0.contentView.map(text) ?? [] }
+        let shared = settingsText.filter(chinese)
+        let languageOptions = LifecycleLanguage.allCases.map(\.title)
+        let languageControlsPresent = languageOptions.allSatisfy { settingsText.contains($0) }
+            && settingsText.contains(LifecycleText.pick("Language", "语言"))
+        // Exercise the saved override in a disposable domain, never this installation's preferences.
+        let originalDomain = LifecycleLanguage.domain
+        let testDomain = "test.menusearch.language." + UUID().uuidString
+        LifecycleLanguage.domain = testDomain
+        defer {
+            UserDefaults.standard.removePersistentDomain(forName: testDomain)
+            LifecycleLanguage.domain = originalDomain
+        }
+        var languagePreferencesWork = true
+        for choice in LifecycleLanguage.allCases {
+            LifecycleLanguage.set(choice)
+            languagePreferencesWork = languagePreferencesWork && LifecycleLanguage.current == choice
+        }
+        LifecycleLanguage.set(.system)
+        languagePreferencesWork = languagePreferencesWork
+            && UserDefaults.standard.persistentDomain(forName: testDomain)?[LifecycleLanguage.key] == nil
         let report: [String: Any] = [
             "ok": !english || remaining.isEmpty,
             "language": Bundle.main.preferredLocalizations.first ?? "",
             "product_text_count": strings.count,
             "remaining_product_chinese": remaining,
             "shared_layer_chinese": Array(Set(shared)).sorted(),
+            "language_options": languageOptions,
+            "language_controls_present": languageControlsPresent,
+            "language_preferences_work": languagePreferencesWork,
             "cli_error_preserved": raw.message == "MenuSearch 已被其他 App 占用，未能注册；原快捷键保持不变。",
             "offscreen": NSApp.windows.allSatisfy { !$0.isVisible } && NSApp.activationPolicy() == .prohibited,
             "scope": "Production product views, fixed English demo menus; shared-layer strings reported separately."
