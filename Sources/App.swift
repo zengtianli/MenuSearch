@@ -540,6 +540,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation, 
         if !measuring { KeyConflicts.declareIfMissing(coordinator.settings) }
         #endif
         coordinator.installSettingsWindow()
+        #if !APP_STORE
+        // Menu bar drop-down shortcut and menu-bar resident (本人 2026-10-20): ⌃⌥M does what a click on the menu bar icon
+        // does; closing the window only hides it and leaves the Dock and ⌘Tab; the real quit is in the drop-down.
+        // Not for the measured copy, which registers and shows nothing.
+        if !measuring { MenuBarHotKey.install(default: "⌃⌥M"); MenuBarResident.install() }
+        #endif
         activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] note in
             if let application = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
@@ -593,7 +599,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation, 
     }
 
     private func present(application: Bool, menuBarIcon: Bool) {
-        let policy: NSApplication.ActivationPolicy = application ? .regular : .accessory
+        // Menu-bar resident: in the Dock and ⌘Tab only while a window is open, whatever keeps the process running.
+        #if APP_STORE
+        let windowed = application
+        #else
+        let windowed = application && (MenuBarResident.shared == nil || MenuBarResident.hasMainWindow)
+        #endif
+        let policy: NSApplication.ActivationPolicy = windowed ? .regular : .accessory
         if NSApp.activationPolicy() != policy { NSApp.setActivationPolicy(policy) }
         if menuBarIcon, statusItem == nil {
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)

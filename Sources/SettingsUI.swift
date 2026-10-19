@@ -84,7 +84,7 @@ final class ProductSettings: NSObject {
             : String(localized: "尚未允许。读取和执行菜单命令需要它；请在「隐私与安全性 › 辅助功能」里打开 MenuSearch，这里不会代你授权。")
         accessButton.title = trusted ? String(localized: "查看系统设置…") : String(localized: "打开系统设置…")
         modePopup.selectItem(at: Mode.allCases.firstIndex(of: settings.mode) ?? 0)
-        modeDetail.stringValue = builtin ? String(localized: "MenuSearch 保持运行并自己注册下面的快捷键，在程序坞、⌘Tab 和菜单栏里都能看到它。关掉这个窗口后仍可呼出，直到你退出它。")
+        modeDetail.stringValue = builtin ? String(localized: "MenuSearch 保持运行并自己注册下面的快捷键，图标留在菜单栏；开着这个窗口时也在程序坞和 ⌘Tab 里。关掉这个窗口后仍可呼出，直到你从菜单栏图标退出它。")
             : String(localized: "由 skhd、Karabiner 或其他启动器运行右下方的命令。MenuSearch 不注册快捷键，面板关闭后进程即结束。")
         if !recorder.isRecording { recorder.combo = settings.hotkey }
         clearButton.isEnabled = settings.hotkey != nil
@@ -105,7 +105,7 @@ final class ProductSettings: NSObject {
         loginSwitch.state = coordinator.login.enabled ? .on : .off
         loginSwitch.isEnabled = builtin
         loginDetail.stringValue = builtin ? String(localized: "开机登录后自动启动，不显示窗口。") : String(localized: "外部呼出方式下不常驻，不需要登录时启动。")
-        quitDetail.stringValue = coordinator.staysResident ? String(localized: "也可以从程序坞、菜单栏图标或 ⌘Q 退出。退出后快捷键不再响应，直到再次打开 MenuSearch。")
+        quitDetail.stringValue = coordinator.staysResident ? String(localized: "也可以用菜单栏图标里的「退出 MenuSearch」退出；⌘Q 只关窗口。退出后快捷键不再响应，直到再次打开 MenuSearch。")
             : String(localized: "现在没有设置可用的快捷键，MenuSearch 不会留在后台；关掉这个窗口它就结束。")
         if let problem = coordinator.store.localizedLoadError {
             modeDetail.stringValue = problem; modeDetail.textColor = .systemOrange

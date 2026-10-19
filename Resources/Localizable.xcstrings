@@ -307,19 +307,19 @@
         }
       }
     },
-    "MenuSearch 保持运行并自己注册下面的快捷键，在程序坞、⌘Tab 和菜单栏里都能看到它。关掉这个窗口后仍可呼出，直到你退出它。": {
+    "MenuSearch 保持运行并自己注册下面的快捷键，图标留在菜单栏；开着这个窗口时也在程序坞和 ⌘Tab 里。关掉这个窗口后仍可呼出，直到你从菜单栏图标退出它。": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "MenuSearch stays running with the shortcut below and appears in the Dock, ⌘Tab, and menu bar. The shortcut works after you close Settings, until you quit MenuSearch."
+            "value": "MenuSearch stays running with the shortcut below and keeps its icon in the menu bar; while this window is open it is also in the Dock and ⌘Tab. The shortcut works after you close Settings, until you quit MenuSearch from the menu bar icon."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "MenuSearch 保持运行并自己注册下面的快捷键，在程序坞、⌘Tab 和菜单栏里都能看到它。关掉这个窗口后仍可呼出，直到你退出它。"
+            "value": "MenuSearch 保持运行并自己注册下面的快捷键，图标留在菜单栏；开着这个窗口时也在程序坞和 ⌘Tab 里。关掉这个窗口后仍可呼出，直到你从菜单栏图标退出它。"
           }
         }
       }
@@ -392,19 +392,19 @@
         }
       }
     },
-    "也可以从程序坞、菜单栏图标或 ⌘Q 退出。退出后快捷键不再响应，直到再次打开 MenuSearch。": {
+    "也可以用菜单栏图标里的「退出 MenuSearch」退出；⌘Q 只关窗口。退出后快捷键不再响应，直到再次打开 MenuSearch。": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You can also quit from the Dock, the menu bar, or with ⌘Q. The shortcut stops working until you open MenuSearch again."
+            "value": "You can also quit with Quit MenuSearch in the menu bar icon's menu; ⌘Q only closes the window. The shortcut stops working until you open MenuSearch again."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "也可以从程序坞、菜单栏图标或 ⌘Q 退出。退出后快捷键不再响应，直到再次打开 MenuSearch。"
+            "value": "也可以用菜单栏图标里的「退出 MenuSearch」退出；⌘Q 只关窗口。退出后快捷键不再响应，直到再次打开 MenuSearch。"
           }
         }
       }

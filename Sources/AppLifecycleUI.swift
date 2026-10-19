@@ -1,6 +1,7 @@
 // Shared macOS settings migration and version UI. Edit the shared source, then vendor.
 #if os(macOS)
 import AppKit
+import Carbon.HIToolbox
 import CryptoKit
 
 final class AppLifecycleUI: NSObject {
@@ -349,6 +350,10 @@ final class AppLifecycleUI: NSObject {
         // Every app lets the user pick its language here (本人 2026-10-18: a basic requirement for all apps).
         var groups: [NSView] = [Self.group(LifecycleText.pick("Language", "语言"), rows: [
             Self.row(LifecycleText.pick("App language", "界面语言"), detail: languageNote, accessory: languageControls)])]
+        if let hotKey = MenuBarHotKey.shared {
+            groups.append(Self.group(LifecycleText.pick("Menu Bar", "菜单栏"), rows: [
+                Self.row(LifecycleText.pick("Open the menu bar panel", "弹出菜单栏面板"), detail: hotKey.statusLabel, accessory: hotKey.recorder)]))
+        }
         groups += productGroups?() ?? []
         if configuration?.hasSettings == true {
             cloudToggle.target = self; cloudToggle.action = #selector(toggleCloud)
@@ -857,6 +862,281 @@ enum AppUpgradeInstaller {
         let output = pipe.fileHandleForReading.readDataToEndOfFile(); process.waitUntilExit()
         guard process.terminationStatus == 0 else { throw AppUpdateError("安装包验证失败：" + String(decoding: output.prefix(4096), as: UTF8.self)) }
         return String(decoding: output, as: UTF8.self)
+    }
+}
+/// 常驻菜单栏 (本人 2026-10-20, like Raycast): closing the main window only hides it, the app keeps running in the
+/// menu bar. While a main window (or the settings window) is open the app is in ⌘Tab and the Dock; once the last one
+/// closes it leaves both. ⌘Q only closes the windows; the real quit is 退出 in the menu bar drop-down, which calls
+/// `NSApp.terminate` directly, as do logout and `<app> app quit`. A product calls `MenuBarResident.install()` once at
+/// launch; instances run with `.prohibited` (self-tests, quiet lanes) are left alone. The product's app delegate must also
+/// return false from `applicationShouldTerminateAfterLastWindowClosed`: SwiftUI does not count `MenuBarExtra(isInserted:)`
+/// as keeping the app alive, so closing the last window would otherwise quit it.
+final class MenuBarResident: NSObject {
+    private(set) static var shared: MenuBarResident?
+    private var observers: [NSObjectProtocol] = []
+    private var keyMonitor: Any?
+
+    static func install() {
+        guard shared == nil else { return }
+        let resident = MenuBarResident()
+        shared = resident
+        resident.start()
+    }
+
+    /// A window that makes the app a regular one: titled, open or minimized; not a panel, the menu bar drop-down or a
+    /// status bar window.
+    static func isMainWindow(_ window: NSWindow) -> Bool {
+        let name = String(describing: type(of: window))
+        return (window.isVisible || window.isMiniaturized) && window.styleMask.contains(.titled) && !(window is NSPanel)
+            && !name.contains("MenuBarExtra") && !name.contains("StatusBar")
+    }
+    static var hasMainWindow: Bool { NSApp.windows.contains(where: isMainWindow) }
+
+    /// ⌘Q: close the main windows instead of quitting.
+    static func closeMainWindows() {
+        for window in NSApp.windows where isMainWindow(window) { window.performClose(nil) }
+    }
+
+    private func start() {
+        for name in [NSWindow.didBecomeKeyNotification, NSWindow.didChangeOcclusionStateNotification, NSWindow.willCloseNotification,
+                     NSWindow.didMiniaturizeNotification, NSWindow.didDeminiaturizeNotification] {
+            // After the run loop turn, so a closing window is already gone from the count.
+            observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                DispatchQueue.main.async { self?.update() }
+            })
+        }
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            guard event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command,
+                  event.charactersIgnoringModifiers?.lowercased() == "q" else { return event }
+            Self.closeMainWindows()
+            return nil
+        }
+        // A normal launch opens the main window a moment after this runs; decide once it had the chance.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.update() }
+    }
+
+    func update() {
+        let current = NSApp.activationPolicy()
+        guard current != .prohibited else { return }
+        let wanted: NSApplication.ActivationPolicy = Self.hasMainWindow ? .regular : .accessory
+        guard current != wanted else { return }
+        NSApp.setActivationPolicy(wanted)
+        // Leaving .accessory drops the app behind the others; the window that just opened should be in front.
+        if wanted == .regular { NSApp.activate(ignoringOtherApps: true) }
+    }
+}
+/// One global shortcut that opens this app's menu bar drop-down from anywhere, like Itsycal (本人 2026-10-20: the
+/// drop-down had no shortcut; the main window is called up by Initials, not by this). Carbon `RegisterEventHotKey`, so no Accessibility permission. A product
+/// calls `MenuBarHotKey.install(default:)` once at launch; the shared settings window then shows a "Menu Bar" row
+/// where the shortcut is recorded again or cleared. Without `action` the app's own status item is clicked, which works
+/// for an `NSStatusItem` (menu or popover) and for SwiftUI `MenuBarExtra` alike. Main thread only, like the settings window.
+final class MenuBarHotKey: NSObject {
+    struct Chord: Equatable {
+        var code: UInt32
+        var modifiers: UInt32
+        static let allowed = UInt32(cmdKey | controlKey | optionKey | shiftKey)
+        /// "⌃⌥T", "⌘⇧Space" or "ctrl+opt+t"; nil when a key or modifier is not known.
+        init?(_ text: String) {
+            var rest = Substring(text.trimmingCharacters(in: .whitespaces)), mods = 0
+            let names: [String: Int] = ["⌘": cmdKey, "cmd": cmdKey, "command": cmdKey, "⌃": controlKey, "ctrl": controlKey, "control": controlKey,
+                                        "⌥": optionKey, "opt": optionKey, "option": optionKey, "alt": optionKey, "⇧": shiftKey, "shift": shiftKey]
+            while let first = rest.first, let flag = names[String(first)] { mods |= flag; rest = rest.dropFirst() }
+            var parts = rest.split(separator: "+").map { String($0) }
+            guard let last = parts.popLast() else { return nil }
+            for part in parts { guard let flag = names[part.lowercased()] else { return nil }; mods |= flag }
+            guard let code = Self.keys.first(where: { $0.value.uppercased() == last.uppercased() })?.key else { return nil }
+            self.code = code; self.modifiers = UInt32(mods)
+        }
+        init(code: UInt32, modifiers: UInt32) { self.code = code; self.modifiers = modifiers & Self.allowed }
+        init(_ event: NSEvent) {
+            var mods = 0
+            if event.modifierFlags.contains(.command) { mods |= cmdKey }
+            if event.modifierFlags.contains(.control) { mods |= controlKey }
+            if event.modifierFlags.contains(.option) { mods |= optionKey }
+            if event.modifierFlags.contains(.shift) { mods |= shiftKey }
+            self.init(code: UInt32(event.keyCode), modifiers: UInt32(mods))
+        }
+        var label: String {
+            [(controlKey, "⌃"), (optionKey, "⌥"), (shiftKey, "⇧"), (cmdKey, "⌘")].filter { modifiers & UInt32($0.0) != 0 }.map(\.1).joined()
+                + (Self.keys[code] ?? "?")
+        }
+        /// Needs ⌘, ⌃ or ⌥ so plain typing is never taken, and a key this table can name.
+        var isUsable: Bool { Self.keys[code] != nil && modifiers & UInt32(cmdKey | controlKey | optionKey) != 0 }
+        /// Key codes are positions on the US layout.
+        static let keys: [UInt32: String] = [
+            0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G", 6: "Z", 7: "X", 8: "C", 9: "V", 11: "B", 12: "Q", 13: "W", 14: "E", 15: "R",
+            16: "Y", 17: "T", 18: "1", 19: "2", 20: "3", 21: "4", 22: "6", 23: "5", 24: "=", 25: "9", 26: "7", 27: "-", 28: "8", 29: "0",
+            30: "]", 31: "O", 32: "U", 33: "[", 34: "I", 35: "P", 37: "L", 38: "J", 39: "'", 40: "K", 41: ";", 42: "\\", 43: ",", 44: "/",
+            45: "N", 46: "M", 47: ".", 50: "`", 49: "Space", 36: "Return", 123: "←", 124: "→", 125: "↓", 126: "↑",
+            122: "F1", 120: "F2", 99: "F3", 118: "F4", 96: "F5", 97: "F6", 98: "F7", 100: "F8", 101: "F9", 109: "F10", 103: "F11", 111: "F12"]
+    }
+
+    static let bindingKey = "menuBarHotKey.binding"
+    static let portableKeys = [bindingKey]
+    private(set) static var shared: MenuBarHotKey?
+    let defaults: UserDefaults
+    let fallback: Chord?
+    private let action: () -> Void
+    private var ref: EventHotKeyRef?
+    private var handler: EventHandlerRef?
+    private var monitor: Any?
+    private var windowObservers: [NSObjectProtocol] = []
+    private var retries = 0
+    private(set) var error: String?
+    lazy var recorder: NSButton = {
+        let button = NSButton(title: "", target: self, action: #selector(startRecording))
+        button.bezelStyle = .rounded; button.widthAnchor.constraint(greaterThanOrEqualToConstant: 96).isActive = true
+        return button
+    }()
+    let statusLabel = AppLifecycleUI.detailLabel()
+
+    /// The stored chord; "" in defaults means the owner cleared it. Missing means the product default.
+    var chord: Chord? {
+        guard let text = defaults.string(forKey: Self.bindingKey) else { return fallback }
+        return text.isEmpty ? nil : Chord(text)
+    }
+
+    /// Registers the shortcut now and adds its row to the settings window. `default` is a label such as "⌃⌥T".
+    @discardableResult
+    static func install(default label: String?, defaults: UserDefaults = .standard, action: (() -> Void)? = nil) -> MenuBarHotKey {
+        if let shared { return shared }
+        let hotKey = MenuBarHotKey(fallback: label.flatMap(Chord.init), defaults: defaults, action: action ?? { Self.openStatusItem() })
+        shared = hotKey
+        hotKey.register()
+        return hotKey
+    }
+
+    private init(fallback: Chord?, defaults: UserDefaults, action: @escaping () -> Void) {
+        self.fallback = fallback; self.defaults = defaults; self.action = action
+        super.init()
+    }
+
+    /// Saves a new chord (nil clears it) and registers it; returns the reason when the system refused it.
+    @discardableResult
+    func set(_ chord: Chord?) -> String? {
+        defaults.set(chord?.label ?? "", forKey: Self.bindingKey)
+        retries = 0
+        register()
+        return error
+    }
+
+    func register() {
+        unregister()
+        error = nil
+        if let chord = chord {
+            if !chord.isUsable {
+                error = LifecycleText.pick("Use ⌘, ⌃ or ⌥ with a letter, digit or F-key.", "请用 ⌘、⌃ 或 ⌥ 加字母、数字或 F 键。")
+            } else {
+                installHandler()
+                var hotKey: EventHotKeyRef?
+                // Exclusive: an app already holding this chord makes registration fail, so the conflict is shown here.
+                let rc = RegisterEventHotKey(chord.code, chord.modifiers, EventHotKeyID(signature: Self.signature, id: 1),
+                                             GetApplicationEventTarget(), OptionBits(kEventHotKeyExclusive), &hotKey)
+                if rc == noErr { ref = hotKey; retries = 0 } else if rc == OSStatus(eventHotKeyExistsErr), retries < 15 {
+                    // Usually this app's previous instance, still quitting after a relaunch or install: try again shortly.
+                    retries += 1
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in if self?.ref == nil, self?.monitor == nil { self?.register() } }
+                    error = LifecycleText.pick("\(chord.label) is taken by another app or the system; record another.",
+                                               "\(chord.label) 已被别的 App 或系统占用，请换一个组合。")
+                } else {
+                    error = LifecycleText.pick("\(chord.label) is taken by another app or the system; record another.",
+                                               "\(chord.label) 已被别的 App 或系统占用，请换一个组合。")
+                }
+            }
+        }
+        refreshRow()
+    }
+
+    private func unregister() {
+        if let ref { UnregisterEventHotKey(ref); self.ref = nil }
+    }
+
+    private static let signature: OSType = 0x4D42_484B // "MBHK"
+
+    private func installHandler() {
+        guard handler == nil else { return }
+        var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: OSType(kEventHotKeyPressed))
+        InstallEventHandler(GetApplicationEventTarget(), { _, event, context in
+            guard let event, let context else { return OSStatus(eventNotHandledErr) }
+            var key = EventHotKeyID()
+            let rc = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil,
+                                       MemoryLayout<EventHotKeyID>.size, nil, &key)
+            guard rc == noErr, key.signature == MenuBarHotKey.signature else { return OSStatus(eventNotHandledErr) }
+            let hotKey = Unmanaged<MenuBarHotKey>.fromOpaque(context).takeUnretainedValue()
+            if hotKey.monitor == nil { hotKey.action() }
+            return noErr
+        }, 1, &spec, Unmanaged.passUnretained(self).toOpaque(), &handler)
+    }
+
+    /// Opens this app's own menu bar drop-down the way a click on its icon does; a second call closes it. macOS 27 drives
+    /// SwiftUI `MenuBarExtra(.window)` through the status item's expanded-interface session (its button has no
+    /// target/action, so a simulated click does nothing); older systems and `NSStatusItem` menus take the button click.
+    /// The app is not activated, matching a real click: the drop-down takes key itself and focus returns on close.
+    @discardableResult
+    static func openStatusItem() -> Bool {
+        let key = NSSelectorFromString("statusItem")
+        for window in NSApp.windows where String(describing: type(of: window)).contains("StatusBarWindow") && window.responds(to: key) {
+            // Each display has a replica window; only the real one owns the button.
+            guard let item = window.value(forKey: "statusItem") as? NSStatusItem, let button = item.button, button.window === window else { continue }
+            guard item.isVisible else { return false }
+            if #available(macOS 27.0, *), item.expandedInterfaceDelegate != nil {
+                if let session = item.expandedInterfaceSession {
+                    _ = (session as AnyObject).perform(NSSelectorFromString("cancel"))
+                    return true
+                }
+                let request = NSSelectorFromString("_requestExpandedInterfaceSession")
+                guard item.responds(to: request) else { return false }
+                _ = item.perform(request)
+                return true
+            }
+            button.performClick(nil)
+            return true
+        }
+        return false
+    }
+
+    private func refreshRow() {
+        if monitor != nil {
+            recorder.title = LifecycleText.pick("Press keys…", "请按组合键…")
+            statusLabel.stringValue = LifecycleText.pick("Esc cancels, Delete clears.", "Esc 取消，Delete 清除。")
+            return
+        }
+        recorder.title = chord?.label ?? LifecycleText.pick("Record", "录制")
+        if let error { statusLabel.stringValue = error; statusLabel.textColor = .systemRed; return }
+        statusLabel.textColor = .secondaryLabelColor
+        statusLabel.stringValue = chord == nil
+            ? LifecycleText.pick("Off. Click to record a shortcut.", "未设置。点按钮录制一个组合。")
+            : LifecycleText.pick("Works from any app; press again to close. Click to change.", "在任何 App 里都能按；再按一次收起。点按钮可改。")
+    }
+
+    @objc private func startRecording() {
+        guard monitor == nil else { return }
+        unregister()
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, event.window === self.recorder.window else { return event }
+            switch event.keyCode {
+            case 53: self.stopRecording(nil, keep: true)
+            case 51, 117: self.stopRecording(nil, keep: false)
+            default:
+                let chord = Chord(event)
+                guard chord.isUsable else { NSSound.beep(); return nil }
+                self.stopRecording(chord, keep: false)
+            }
+            return nil
+        }
+        if let window = recorder.window {
+            windowObservers = [NSWindow.willCloseNotification, NSWindow.didResignKeyNotification].map {
+                NotificationCenter.default.addObserver(forName: $0, object: window, queue: .main) { [weak self] _ in self?.stopRecording(nil, keep: true) }
+            }
+        }
+        refreshRow()
+    }
+
+    private func stopRecording(_ chord: Chord?, keep: Bool) {
+        guard monitor != nil else { return }
+        windowObservers.forEach(NotificationCenter.default.removeObserver); windowObservers = []
+        if let monitor { NSEvent.removeMonitor(monitor); self.monitor = nil }
+        if keep { register() } else { set(chord) }
     }
 }
 /// The app's own language choice: Follow System, 简体中文 or English. Stored as this app's `AppleLanguages`
