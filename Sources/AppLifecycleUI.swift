@@ -83,6 +83,9 @@ final class AppLifecycleUI: NSObject {
         guard let appMenu = NSApp.mainMenu?.items.first?.submenu,
               !appMenu.items.contains(where: { ($0.target === self && $0.action == #selector(openSettings)) || ["配置与更新…", "Settings & Updates…"].contains($0.title) }) else { return }
         let items = Self.menuItems()
+        // Standard ⌘, opens settings, unless the app already binds ⌘, to its own settings item.
+        let taken = NSApp.mainMenu?.items.compactMap(\.submenu).flatMap(\.items).contains { $0.keyEquivalent == "," && $0.keyEquivalentModifierMask.intersection([.command, .shift, .option, .control]) == .command } ?? false
+        if !taken { items[0].keyEquivalent = ","; items[0].keyEquivalentModifierMask = .command }
         let index = min(1, appMenu.numberOfItems)
         for (offset, item) in items.enumerated() { appMenu.insertItem(item, at: index + offset) }
         appMenu.insertItem(.separator(), at: index + items.count)
@@ -960,6 +963,30 @@ final class MenuBarHotKey: NSObject {
             [(controlKey, "⌃"), (optionKey, "⌥"), (shiftKey, "⇧"), (cmdKey, "⌘")].filter { modifiers & UInt32($0.0) != 0 }.map(\.1).joined()
                 + (Self.keys[code] ?? "?")
         }
+        /// The chord as an NSMenuItem key equivalent (US-layout characters, matching `keys`).
+        var keyEquivalent: String? {
+            guard let name = Self.keys[code] else { return nil }
+            func scalar(_ value: Int) -> String { String(Character(UnicodeScalar(UInt16(value))!)) }
+            switch name {
+            case "Space": return " "
+            case "Return": return "\r"
+            case "←": return scalar(NSLeftArrowFunctionKey)
+            case "→": return scalar(NSRightArrowFunctionKey)
+            case "↓": return scalar(NSDownArrowFunctionKey)
+            case "↑": return scalar(NSUpArrowFunctionKey)
+            default:
+                if name.count > 1, name.hasPrefix("F"), let n = Int(name.dropFirst()) { return scalar(NSF1FunctionKey + n - 1) }
+                return name.lowercased()
+            }
+        }
+        var modifierFlags: NSEvent.ModifierFlags {
+            var flags: NSEvent.ModifierFlags = []
+            if modifiers & UInt32(cmdKey) != 0 { flags.insert(.command) }
+            if modifiers & UInt32(controlKey) != 0 { flags.insert(.control) }
+            if modifiers & UInt32(optionKey) != 0 { flags.insert(.option) }
+            if modifiers & UInt32(shiftKey) != 0 { flags.insert(.shift) }
+            return flags
+        }
         /// Needs ⌘, ⌃ or ⌥ so plain typing is never taken, and a key this table can name.
         var isUsable: Bool { Self.keys[code] != nil && modifiers & UInt32(cmdKey | controlKey | optionKey) != 0 }
         /// Key codes are positions on the US layout.
@@ -980,6 +1007,9 @@ final class MenuBarHotKey: NSObject {
     private var ref: EventHotKeyRef?
     private var handler: EventHandlerRef?
     private var monitor: Any?
+    private var trackedMenu: NSMenu?
+    private var closeItem: NSMenuItem?
+    private var menuObservers: [NSObjectProtocol] = []
     private var windowObservers: [NSObjectProtocol] = []
     private var retries = 0
     private(set) var error: String?
@@ -1003,6 +1033,7 @@ final class MenuBarHotKey: NSObject {
         let hotKey = MenuBarHotKey(fallback: label.flatMap(Chord.init), defaults: defaults, action: action ?? { Self.openStatusItem() })
         shared = hotKey
         hotKey.register()
+        hotKey.watchStatusMenu()
         return hotKey
     }
 
@@ -1063,37 +1094,84 @@ final class MenuBarHotKey: NSObject {
                                        MemoryLayout<EventHotKeyID>.size, nil, &key)
             guard rc == noErr, key.signature == MenuBarHotKey.signature else { return OSStatus(eventNotHandledErr) }
             let hotKey = Unmanaged<MenuBarHotKey>.fromOpaque(context).takeUnretainedValue()
-            if hotKey.monitor == nil { hotKey.action() }
+            // After the Carbon dispatch returns: a menu click blocks for the whole menu session, and the begin-tracking
+            // observer releases this very hot key.
+            if hotKey.monitor == nil { DispatchQueue.main.async { hotKey.action() } }
             return noErr
         }, 1, &spec, Unmanaged.passUnretained(self).toOpaque(), &handler)
     }
 
-    /// Opens this app's own menu bar drop-down the way a click on its icon does; a second call closes it. macOS 27 drives
-    /// SwiftUI `MenuBarExtra(.window)` through the status item's expanded-interface session (its button has no
-    /// target/action, so a simulated click does nothing); older systems and `NSStatusItem` menus take the button click.
-    /// The app is not activated, matching a real click: the drop-down takes key itself and focus returns on close.
-    @discardableResult
-    static func openStatusItem() -> Bool {
+    /// This app's own status item (each display has a replica window; only the real one owns the button).
+    static func ownStatusItem() -> NSStatusItem? {
         let key = NSSelectorFromString("statusItem")
         for window in NSApp.windows where String(describing: type(of: window)).contains("StatusBarWindow") && window.responds(to: key) {
-            // Each display has a replica window; only the real one owns the button.
             guard let item = window.value(forKey: "statusItem") as? NSStatusItem, let button = item.button, button.window === window else { continue }
-            guard item.isVisible else { return false }
-            if #available(macOS 27.0, *), item.expandedInterfaceDelegate != nil {
-                if let session = item.expandedInterfaceSession {
-                    _ = (session as AnyObject).perform(NSSelectorFromString("cancel"))
-                    return true
-                }
-                let request = NSSelectorFromString("_requestExpandedInterfaceSession")
-                guard item.responds(to: request) else { return false }
-                _ = item.perform(request)
+            return item
+        }
+        return nil
+    }
+
+    /// Opens this app's own menu bar drop-down the way a click on its icon does; a second press closes it. macOS 27 drives
+    /// SwiftUI `MenuBarExtra(.window)` through the status item's expanded-interface session (its button has no
+    /// target/action, so a simulated click does nothing). An `NSStatusItem` menu takes the button click, which tracks the
+    /// menu modally; while it is open the chord is handled by `watchStatusMenu()`, since Carbon hot keys wait until the
+    /// menu closes. The app is not activated, matching a real click.
+    @discardableResult
+    static func openStatusItem() -> Bool {
+        guard let item = ownStatusItem(), let button = item.button, item.isVisible else { return false }
+        if #available(macOS 27.0, *), item.expandedInterfaceDelegate != nil {
+            if let session = item.expandedInterfaceSession {
+                _ = (session as AnyObject).perform(NSSelectorFromString("cancel"))
                 return true
             }
-            button.performClick(nil)
+            let request = NSSelectorFromString("_requestExpandedInterfaceSession")
+            guard item.responds(to: request) else { return false }
+            _ = item.perform(request)
             return true
         }
-        return false
+        button.performClick(nil)
+        return true
     }
+
+    /// While this app's NSMenu drop-down is open, the chord is released (the window server would otherwise hold the press
+    /// until the menu closes and then reopen it) and a hidden item with the same key equivalent closes the menu; the
+    /// registration comes back when tracking ends. Covers a drop-down opened by mouse as well.
+    private func watchStatusMenu() {
+        guard menuObservers.isEmpty else { return }
+        let center = NotificationCenter.default
+        menuObservers.append(center.addObserver(forName: NSMenu.didBeginTrackingNotification, object: nil, queue: nil) { [weak self] note in
+            guard let self, self.ref != nil, self.monitor == nil, let chord = self.chord, let menu = note.object as? NSMenu,
+                  menu === Self.ownStatusItem()?.menu, let equivalent = chord.keyEquivalent else { return }
+            self.trackedMenu = menu
+            self.unregister()
+            let item = NSMenuItem(title: "", action: #selector(self.closeFromMenu(_:)), keyEquivalent: equivalent)
+            item.keyEquivalentModifierMask = chord.modifierFlags
+            item.target = self; item.isHidden = true; item.allowsKeyEquivalentWhenHidden = true
+            self.closeItem = item
+            self.ensureCloseItem()
+        })
+        // A product that rebuilds its menu as it opens (menuNeedsUpdate / menuWillOpen) drops the item; put it back.
+        for name in [NSMenu.didRemoveItemNotification, NSMenu.didAddItemNotification] {
+            menuObservers.append(center.addObserver(forName: name, object: nil, queue: nil) { [weak self] note in
+                guard let self, let menu = note.object as? NSMenu, menu === self.trackedMenu else { return }
+                RunLoop.main.perform(inModes: [.common]) { [weak self] in self?.ensureCloseItem() }
+            })
+        }
+        menuObservers.append(center.addObserver(forName: NSMenu.didEndTrackingNotification, object: nil, queue: nil) { [weak self] note in
+            guard let self, let menu = note.object as? NSMenu, menu === self.trackedMenu else { return }
+            if let item = self.closeItem, item.menu === menu { menu.removeItem(item) }
+            self.closeItem = nil; self.trackedMenu = nil
+            if self.monitor == nil { self.register() }
+        })
+    }
+
+    private func ensureCloseItem() {
+        guard let menu = trackedMenu, let item = closeItem, item.menu == nil else { return }
+        menu.addItem(item)
+    }
+
+    /// Choosing the hidden item is what closes the menu; nothing else to do.
+    @objc private func closeFromMenu(_ sender: Any?) {}
 
     private func refreshRow() {
         if monitor != nil {
