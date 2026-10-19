@@ -12,11 +12,14 @@ description: 原生 macOS 菜单命令搜索：在任意 App 里按快捷键，�
 key_scripts:
 - build.sh
 - scripts/install.sh
-- scripts/release.py
 depends_on: []
 # 交付流程（SOP）事实，字段说明见 ~/Apps/chapter/engine/app_sop.py 的 SOP_KEYS。
 sop:
   local_install: direct  # 本人 2026-10-19 补充：本机直接装本地构建；brew/TF 归 appship，本人开口才走
+  # 公开发行只经 appship（本人 2026-10-20）：appship ship --app menu-search --channels github → 公证出包，zip+dmg+SHA256SUMS.txt
+  # 发到 zengtianli/MenuSearch 的 Release（应用内升级读 releases/latest），回读后记录写 perf/release.json。
+  github:
+    record: perf/release.json
   platforms:
     mac: {}
     iphone:
@@ -103,7 +106,7 @@ sop:
   media_meta: ~/Apps/apps-portal/site/media/menu-search/provenance.json
   capture: bash scripts/site-shots.sh
   site_deploy: portal
-  # 正式发行记录：scripts/release.py 公证并打包后写入（版本、构建号、来源提交、ZIP 与 DMG 的校验值和公证编号）。
+  # 正式发行记录：appship 的 github 渠道发布并回读后写入（版本、构建号、Release 地址、ZIP 与 DMG 的校验值）。
   release: perf/release.json
   cli:
     app: cyou.tianli.menusearch
@@ -199,6 +202,6 @@ sop:
     ready_signal: os_log
     quiet_launch: [--app-measure]
     in_use: true
-    download: build/release/MenuSearch-{short}-arm64.dmg
+    download: build/release/{short}/github/MenuSearch-{short}-arm64.dmg
     data: 内置快捷键方式常驻、面板未显示时采样；按下快捷键到完整结果的耗时由 App 记录在 menusearch status 的 last_show。
     data_en: Sampled while resident in built-in shortcut mode with the panel closed; the time from key press to the complete list is recorded by the app in last_show of menusearch status.

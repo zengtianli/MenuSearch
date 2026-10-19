@@ -137,7 +137,7 @@ mkdir -p ~/.local/bin && ln -s /Applications/MenuSearch.app/Contents/MacOS/MenuS
 | 0.3.1 (10) 增量验证 | 92 项离屏自检、19 项真实二进制隔离 CLI 回归通过，已完成本机快装与配置保留回读；尚未公证或公开发行 |
 | 逻辑测试、后台自检（生产面板、设置窗口、方式与快捷键事务、控制通道、配置迁移） | 每次构建都跑，失败就不产出 App；关键保护做过反向验证（改坏后自检失败） |
 | 固定验收 functionality / recovery / privacy / native_ui | 通过（隔离目录，不上屏）：`python3 scripts/accept/run.py <项>` |
-| 签名、公证、发行包回读 | 每个发行版由 `scripts/release.py` 核对：ZIP 与 DMG 里的 App 都过 Gatekeeper，可执行文件与构建记录一致 |
+| 签名、公证、发行包回读 | 每个发行版由 appship 的 github 渠道核对：ZIP 与 DMG 里的 App 都过 Gatekeeper，可执行文件与构建记录一致 |
 | 应用内升级 | 在作者的 Mac 上真实执行过：配置与快捷键保留，升级后不弹窗口、不抢前台 |
 | 真实菜单读取 | Safari、Finder、微信、Chrome 的 10 条查询全部命中（命令行只读读取） |
 | 真实桌面使用 | 作者日常在用。没有逐项的上屏验收记录和截图；页面与本说明里的截图是后台渲染的演示数据 |

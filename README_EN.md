@@ -135,7 +135,7 @@ The numbers above are written from the measurement file. Two more: filtering whi
 | 0.3.1 (10) incremental validation | 92 offscreen checks and 19 isolated real-binary CLI regressions passed; local installation and retained settings verified. Not yet notarized or publicly released |
 | Logic tests and the background self-test (production panel, settings window, mode and shortcut transactions, control socket, configuration transfer) | Run on every build; a failure produces no app. Key guards were reverse-validated (breaking each makes the self-test fail) |
 | Fixed acceptance checks: functionality / recovery / privacy / native_ui | Pass (isolated directory, nothing on screen): `python3 scripts/accept/run.py <check>` |
-| Signature, notarization, reading the release packages back | Checked for every release by `scripts/release.py`: the app inside both the ZIP and the DMG passes Gatekeeper and matches the build record |
+| Signature, notarization, reading the release packages back | Checked for every release by appship's github channel: the app inside both the ZIP and the DMG passes Gatekeeper and matches the build record |
 | In-app upgrade | Run for real on the author's Mac: configuration and shortcut kept, no window and no focus change afterwards |
 | Reading real menus | All ten checklist queries found in Safari, Finder, WeChat and Chrome (read-only, from the command line) |
 | Use on a real desktop | In daily use by the author. There is no item-by-item on-screen acceptance record; the screenshots here and on the product page are background renders of demo data |
