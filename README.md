@@ -48,7 +48,7 @@ mkdir -p ~/.local/bin && ln -s /Applications/MenuSearch.app/Contents/MacOS/MenuS
 | 内置快捷键（默认） | MenuSearch 自己向系统注册你录制的那一个组合键 | 常驻菜单栏：菜单栏图标一直在；只有开着窗口（比如设置）时才出现在程序坞和 ⌘Tab 应用切换器里，窗口都关掉就退回菜单栏。关掉设置窗口和面板都不会退出，退出它才结束 |
 | 外部呼出 | skhd、Karabiner 或别的启动器运行 `menusearch show` | 不常驻；面板关闭后进程结束，不注册任何快捷键，也不进程序坞 |
 
-保持运行时从菜单栏找它：点菜单栏图标，或在任意 App 里按 ⌃⌥M 打开同一个下拉菜单（再按一次关上；组合键可在设置里改）——里面是「搜索当前 App 的菜单」「设置…」「退出」。再次打开 MenuSearch 或运行 `menusearch settings` 会打开设置窗口。⌘Q 只关窗口、不退出；真正退出用菜单栏下拉里的「退出」、设置窗口里的按钮或 `menusearch quit`；退出后快捷键不再响应，直到再次打开。
+保持运行时从菜单栏找它：点菜单栏图标打开下拉菜单——里面是「搜索当前 App 的菜单」「设置…」「退出」。再次打开 MenuSearch 或运行 `menusearch settings` 会打开设置窗口。⌘Q 只关窗口、不退出；真正退出用菜单栏下拉里的「退出」、设置窗口里的按钮或 `menusearch quit`。
 
 两种方式互斥，在设置窗口或用 `menusearch config set mode builtin|external` 切换。切换时先停掉旧的快捷键来源再启用新的；新的启用不了（比如组合键被别的 App 占用）就退回原来的方式，已保存的设置不变。
 
@@ -142,7 +142,7 @@ mkdir -p ~/.local/bin && ln -s /Applications/MenuSearch.app/Contents/MacOS/MenuS
 | 真实菜单读取 | Safari、Finder、微信、Chrome 的 10 条查询全部命中（命令行只读读取） |
 | 真实桌面使用 | 作者日常在用。没有逐项的上屏验收记录和截图；页面与本说明里的截图是后台渲染的演示数据 |
 
-已知限制：只支持 Apple Silicon；界面只有中文；个别 App 的菜单要等它响应才读得全，读不全时面板会标「结果不完整」；菜单栏图标在刘海旁边放不下时系统不显示它（⌃⌥M 也就打不开下拉），这时再次打开 MenuSearch 或运行 `menusearch settings` 打开设置窗口，从那里或用 `menusearch quit` 退出。
+已知限制：只支持 Apple Silicon；界面只有中文；个别 App 的菜单要等它响应才读得全，读不全时面板会标「结果不完整」；菜单栏图标在刘海旁边放不下时系统不显示它，这时再次打开 MenuSearch 或运行 `menusearch settings` 打开设置窗口，从那里或用 `menusearch quit` 退出。
 
 ## 从源码构建
 

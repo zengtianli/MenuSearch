@@ -48,7 +48,7 @@ Open MenuSearch again (or run `menusearch settings`, or press ⌘, in the panel)
 | Built-in shortcut (default) | MenuSearch registers the one combination you recorded with the system | Stays resident in the menu bar: the menu bar icon is always there; it appears in the Dock and the ⌘Tab switcher only while one of its windows (such as settings) is open, and drops back to the menu bar when they close. Closing the settings window or the panel does not quit it; quitting it does |
 | External | skhd, Karabiner or another launcher runs `menusearch show` | Not resident; the process ends after the panel closes, registers no shortcut and never enters the Dock |
 
-While it keeps running you reach it from the menu bar: click the menu bar icon, or press ⌃⌥M in any app to open the same drop-down (press again to close it; the combination can be changed in settings), which has "Search the current app's menus", "Settings…" and "Quit". Opening MenuSearch again or running `menusearch settings` brings up the settings window. ⌘Q only closes its windows and does not quit; to quit, use "Quit" in the menu bar drop-down, the button in the settings window or `menusearch quit`; the shortcut then stops responding until the app is opened again.
+While it keeps running you reach it from the menu bar: click the menu bar icon to open its drop-down, which has "Search the current app's menus", "Settings…" and "Quit". Opening MenuSearch again or running `menusearch settings` brings up the settings window. ⌘Q only closes its windows and does not quit; to quit, use "Quit" in the menu bar drop-down, the button in the settings window or `menusearch quit`.
 
 The two are mutually exclusive; switch in the settings window or with `menusearch config set mode builtin|external`. Switching stops the old shortcut source before starting the new one; if the new one cannot start (for example another app owns the combination) the previous mode comes back and the saved settings stay as they were.
 
@@ -140,7 +140,7 @@ The numbers above are written from the measurement file. Two more: filtering whi
 | Reading real menus | All ten checklist queries found in Safari, Finder, WeChat and Chrome (read-only, from the command line) |
 | Use on a real desktop | In daily use by the author. There is no item-by-item on-screen acceptance record; the screenshots here and on the product page are background renders of demo data |
 
-Known limits: Apple Silicon only; the interface is Chinese only; some apps' menus can be read completely only once the app answers, and the panel says so when a result is incomplete; when the menu bar icon does not fit next to the notch the system hides it (and ⌃⌥M cannot open the drop-down); open MenuSearch again or run `menusearch settings` to get the settings window, and quit from there or with `menusearch quit`.
+Known limits: Apple Silicon only; the interface is Chinese only; some apps' menus can be read completely only once the app answers, and the panel says so when a result is incomplete; when the menu bar icon does not fit next to the notch the system hides it; open MenuSearch again or run `menusearch settings` to get the settings window, and quit from there or with `menusearch quit`.
 
 ## Building from source
 

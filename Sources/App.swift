@@ -541,10 +541,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation, 
         #endif
         coordinator.installSettingsWindow()
         #if !APP_STORE
-        // Menu bar drop-down shortcut and menu-bar resident (本人 2026-10-20): ⌃⌥M does what a click on the menu bar icon
-        // does; closing the window only hides it and leaves the Dock and ⌘Tab; the real quit is in the drop-down.
+        // Menu-bar resident (本人 2026-10-20): closing the window only hides it and leaves the Dock and ⌘Tab; the real
+        // quit is in the drop-down. No drop-down shortcut: it is an action menu, and those get none.
         // Not for the measured copy, which registers and shows nothing.
-        if !measuring { MenuBarHotKey.install(default: "⌃⌥M"); MenuBarResident.install() }
+        if !measuring { MenuBarResident.install() }
         #endif
         activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] note in
