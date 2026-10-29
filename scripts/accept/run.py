@@ -6,6 +6,11 @@ logic tests and the offscreen self-test) and then drives that copy's own command
 directory. Nothing touches build/MenuSearch.app, /Applications, the user's settings, real shortcuts, login items or
 other applications' menus, and nothing is shown on screen.
 
+Under Chapter (PRD-foundation R1) the engine hands over its current-source candidate in SOP_INSTALLED_APP (built by
+the registered `sop.candidate.build`, receipt in SOP_BUILD_RECEIPT): the checks then drive that bundle instead, and
+its offscreen self-test runs here once per executable (cached under build/accept/candidate-<sha>/). Without
+SOP_INSTALLED_APP a manual run keeps building its own cached copy as before.
+
 What these checks cannot show: a real shortcut reaching the panel, a command executed in another application,
 real input-method composition, and how the panel looks on screen. Those need the real desktop.
 """
@@ -37,8 +42,68 @@ def source_hash():
     return digest.hexdigest()[:16]
 
 
+def quiet_phase(command, env, log):
+    """The self-test's timing needs the same quiet window build.sh's `run_phase measure` asks for; busy → 75."""
+    module = Path(os.environ.get("SIM_LANE_SCRIPT") or Path.home() / "Dev/tools/dev/lib/tools/macapp/ios/sim_lane.py")
+    with open(log, "w") as out:
+        if not module.is_file():
+            return subprocess.call(command, env=env, stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("sim_lane", module)
+        lane = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = lane
+        spec.loader.exec_module(lane)
+        locks = lane.lock_chain(f"menusearch:accept-self-test:{os.getpid()}")
+        try:
+            lane.acquire(locks, None, lock_wait=0, load_wait=0, max_load=lane.max_load_default())
+        except lane.Busy as error:
+            print(f"Deferred self-test: {error}", file=sys.stderr)
+            raise SystemExit(75)
+        try:
+            return subprocess.call(command, env=env, stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+        finally:
+            for lock in reversed(locks):
+                lock.release()
+
+
+def candidate(app):
+    """Chapter's current-source candidate: the bundle as given, plus its offscreen self-test (once per executable)."""
+    exe = app / "Contents/MacOS/MenuSearch"
+    if not exe.is_file():
+        raise SystemExit(f"SOP_INSTALLED_APP has no MenuSearch executable: {app}")
+    cache = ROOT / "build/accept" / ("candidate-" + hashlib.sha256(exe.read_bytes()).hexdigest()[:16])
+    cache.mkdir(parents=True, exist_ok=True)
+    with open(cache / ".lock", "w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("Candidate self-test is busy; returning to the jobs queue", file=sys.stderr)
+            raise SystemExit(75)
+        done = cache / ".complete"
+        if not done.is_file():
+            out = cache / "self-test"
+            shutil.rmtree(out, ignore_errors=True)
+            scratch = Path(tempfile.mkdtemp(prefix="menusearch-selftest."))
+            try:
+                env = {**os.environ, "MENUSEARCH_SUPPORT_DIR": str(scratch / "support"),
+                       "APP_LIFECYCLE_SUPPORT_DIR": str(scratch / "lifecycle")}
+                code = quiet_phase([str(exe), "--self-test", "--output", str(out)], env, cache / "self-test.log")
+            finally:
+                shutil.rmtree(scratch, ignore_errors=True)
+            if code == 75:
+                raise SystemExit(75)
+            if not (out / "self-test.json").is_file():
+                sys.stderr.write((cache / "self-test.log").read_text()[-3000:])
+                raise SystemExit("candidate self-test produced no report")
+            if code == 0:  # a failed run is reported as is but not cached: the next run tries again
+                done.write_text(str(exe) + "\n")
+    return cache, exe
+
+
 def build():
     """The cached acceptance copy of the current source; built under a lock so parallel checks share it."""
+    if os.environ.get("SOP_INSTALLED_APP"):
+        return candidate(Path(os.environ["SOP_INSTALLED_APP"]).resolve())
     (ROOT / "build/accept").mkdir(parents=True, exist_ok=True)
     with open(ROOT / "build/accept/.lock", "w") as lock:
         try:
@@ -97,7 +162,7 @@ def named(report, names):
 
 
 def functionality(cache, exe, box):
-    info = plistlib.loads((cache / "MenuSearch.app/Contents/Info.plist").read_bytes())
+    info = plistlib.loads((exe.parents[1] / "Info.plist").read_bytes())
     checks = {}
     version = box.run("version")
     checks["version_matches_bundle"] = version.returncode == 0 and version.stdout.strip() == f'{info["CFBundleShortVersionString"]} ({info["CFBundleVersion"]})'
@@ -299,7 +364,10 @@ def main():
         box.close()
     failed = sorted(k for k, v in checks.items() if not v)
     detail = {"ok": not failed, "check": name, "summary": f"{len(checks) - len(failed)}/{len(checks)} 项通过" + (f"；未过：{', '.join(failed)}" if failed else ""),
-              "checks": checks, "failed": failed, "build": str(cache), "environment": "当前源码的临时 ad-hoc 构建；隔离目录；不上屏、不注册真实快捷键、不读写其他 App", **extra}
+              "checks": checks, "failed": failed, "build": str(cache), "app": str(exe.parents[2]),
+              "target": json.loads(os.environ.get("SOP_ACCEPTANCE_TARGET") or "null"),
+              "environment": ("Chapter 给的当前源码候选包（SOP_INSTALLED_APP）" if os.environ.get("SOP_INSTALLED_APP") else "当前源码的临时 ad-hoc 构建")
+              + "；隔离目录；不上屏、不注册真实快捷键、不读写其他 App", **extra}
     if os.environ.get("SOP_OUT_DIR"):
         Path(os.environ["SOP_OUT_DIR"], f"{name}.detail.json").write_text(json.dumps(detail, ensure_ascii=False, indent=2))
     print(json.dumps(detail, ensure_ascii=False, indent=2))

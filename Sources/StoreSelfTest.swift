@@ -33,7 +33,7 @@ enum StoreSelfTest {
             let combo = Combo(canonical: "ctrl+alt+m")!
             try settings.save(Settings(mode: .builtin, hotkey: combo))
             checks["settings_roundtrip"] = settings.load() == Settings(mode: .builtin, hotkey: combo)
-            let file = AppConfigurationFile(url: settings.url, keys: ["mode", "hotkey"]) { try Settings.validate(field: $0) }
+            let file = AppConfigurationFile(url: settings.url, keys: ["mode", "hotkey"], validateField: { try Settings.validate(field: $0, value: $1) })
             let configuration = AppConfiguration(productID: Env.bundleID, files: [file])
             let exported = probe.appendingPathComponent("export.json")
             try StoreSettingsUI.export(configuration, to: exported)

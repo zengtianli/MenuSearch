@@ -24,6 +24,7 @@ targets:
           - SelfTest.swift
           - AppLifecycle.swift
           - AppLifecycleUI.swift
+          - AppLifecycleCLI.swift
       - path: Assets.xcassets
       - path: ../Resources/tuning.json
         buildPhase: resources

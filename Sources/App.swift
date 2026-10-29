@@ -401,7 +401,9 @@ final class Coordinator: NSObject {
         let configuration = AppConfiguration(productID: Env.bundleID, files: [file])
         configuration.onChange = { [weak self] in self?.reloadFromDisk() }
         self.configuration = configuration
-        AppLifecycleCLI.follow(configuration)
+        #if !APP_STORE
+        AppLifecycleCLI.follow(configuration)   // 商店版没有命令行，无需跟随命令行改动
+        #endif
         let product = ProductSettings(coordinator: self)
         productSettings = product
         onChange = { [weak product] in product?.refresh() }

@@ -13,7 +13,9 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
-APP = Path('/Applications/MenuSearch.app')
+INSTALLED = Path('/Applications/MenuSearch.app')
+# Chapter hands over the bundle under test (PRD-foundation R1: its current-source candidate); manual runs keep /Applications.
+APP = Path(os.environ.get('SOP_INSTALLED_APP') or INSTALLED)
 PRODUCT = 'cyou.tianli.menusearch'
 FEATURES = ('settings', 'shortcuts', 'icloud', 'updates')
 
@@ -72,11 +74,13 @@ def production_snapshot():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--app', type=Path, default=os.environ.get('MENUSEARCH_BASICS_APP', str(APP)))
-    parser.add_argument('--receipt', type=Path, default=os.environ.get('MENUSEARCH_BASICS_RECEIPT', str(ROOT / 'perf/build-receipt.json')))
+    parser.add_argument('--receipt', type=Path, default=os.environ.get('MENUSEARCH_BASICS_RECEIPT') or os.environ.get('SOP_BUILD_RECEIPT') or str(ROOT / 'perf/build-receipt.json'))
     args = parser.parse_args()
     selected_app = Path(args.app).resolve()
     receipt_path = Path(args.receipt).resolve()
-    candidate = selected_app != APP.resolve()
+    candidate = selected_app != INSTALLED.resolve()
+    # Chapter computed SOP_BUILD_CURRENT for exactly the bundle it handed over in SOP_INSTALLED_APP.
+    engine_target = bool(os.environ.get('SOP_INSTALLED_APP')) and selected_app == Path(os.environ['SOP_INSTALLED_APP']).resolve()
     if candidate and (not selected_app.is_relative_to(ROOT / 'build') or not receipt_path.is_relative_to(ROOT / 'build/accept')):
         raise ValueError('Candidates and their receipts must be under this product build/ and build/accept/')
     spec = json.loads(os.environ['SOP_PRODUCT_BASICS_SPEC'])
@@ -106,7 +110,7 @@ def main():
                'code_binding_sha256': code['sha256'], 'build_current': code['current'],
                'source_files': source_files, 'signature_valid': signature_ok, 'info_sha256': info_sha}
     # Chapter's verdict covers the installed binary; a candidate is valid here only if it is the same binary.
-    candidate_current = not candidate or installed_sha == before['executable_sha256']
+    candidate_current = not candidate or engine_target or installed_sha == before['executable_sha256']
     bound = (artifact_matches(installed_info, installed_sha, artifact)
              and signature_ok and code['current'] and candidate_current)
     for feature in FEATURES:

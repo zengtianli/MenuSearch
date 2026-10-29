@@ -38,11 +38,31 @@ sop:
     source_visibility: public
     source_url: https://github.com/zengtianli/MenuSearch
     rationale: 独立的菜单命令搜索工具，替代 Raycast 的 Search Menu Items；面向需要键盘直达菜单命令的 Mac 用户，MIT 开源，GitHub Releases 提供签名并公证的安装包，产品页提供演示与使用步骤。
+    role: application
+    product_id: menu-search
+    primary: true
+    public_summary: 在任意 Mac 应用里搜索菜单命令，筛选后直接执行选中的菜单项。
+    public_features:
+    - title: 搜菜单
+      text: 列出当前应用菜单和各级子菜单，输入文字即时筛选。
+    - title: 键盘执行
+      text: 用方向键选择、回车执行和 Escape 关闭；首次使用需辅助功能授权。
+    public_icon: /Users/tianli/Apps/menu-search/icon/AppIcon.png
   # PRD 第 7 节首版预算：内置方式空闲 CPU 平均 ≤0.1%，phys_footprint ≤30 MB。
   budget:
     cpu: 0.1
     memory_mb: 30
   test: bash build.sh --test-only
+  # TestFlight-only: build-only entry; --quick builds and signs build/quick/MenuSearch.app (no install),
+  # which sop.localization.shots reads.
+  build: CODESIGN_IDENTITY=- bash build.sh --quick
+  # 验收测当前源码候选包（契约 ~/Apps/chapter/docs/PRD-foundation-20261019.md R1）：沿用上面只构建不装机的 --quick，
+  # 每次重出 build/quick/MenuSearch.app；回执由 Chapter 引擎写，scripts/accept/*.py 经 SOP_INSTALLED_APP 拿到被测包。
+  candidate:
+    build: CODESIGN_IDENTITY=- bash build.sh --quick
+    app: build/quick/MenuSearch.app
+    receipt: build/accept/candidate-receipt.json
+    source_globs: [Sources/**, Resources/**, Info.plist, icon/AppIcon.icns, build.sh, LICENSE, Tests/**]
   test_inputs:
   - Tests/**
   product_basics:
