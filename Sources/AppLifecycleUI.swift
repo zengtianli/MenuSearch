@@ -81,7 +81,9 @@ final class AppLifecycleUI: NSObject {
     //   · its own settings page → `AppLifecycleUI.useSettings { open it }` once at launch; ⌘, opens that page, and this
     //     window stays reachable as 配置与更新… (no shortcut). That page puts the language row first
     //     (`LifecycleLanguageRow.group()` in AppKit, `LifecycleLanguagePicker()` in SwiftUI).
-    //   · a menu bar panel or status menu → `AppLifecycleUI.settingsMenuItem()`, the same 设置… as ⌘,.
+    //   · a menu bar panel or status menu → `AppLifecycleUI.statusMenuItems()` (设置… ⌘,, 检查更新…; 配置与更新… too when
+    //     the product has its own page), or just `settingsMenuItem()` for a single 设置… button.
+    //   · never add `menuItems()` to the app menu by hand: the shared layer then sees its items and does not bind ⌘,.
     // Checked on the real running app by menu_settings_check.py (Chapter settings-menu).
 
     /// The product's own settings page, when it has one (`useSettings`). nil: ⌘, opens this shared window.
@@ -101,6 +103,15 @@ final class AppLifecycleUI: NSObject {
         item.keyEquivalentModifierMask = .command
         item.target = shared
         return item
+    }
+
+    /// The standard block for a menu bar panel / status menu: 设置… (⌘,), then 配置与更新… only when the product has its
+    /// own settings page, then 检查更新…. Products add these and nothing hand-written.
+    static func statusMenuItems() -> [NSMenuItem] {
+        let update = NSMenuItem(title: LifecycleText.pick("Check for Updates…", "检查更新…"), action: #selector(checkUpdates), keyEquivalent: "")
+        update.target = shared
+        guard shared.productSettings != nil else { return [settingsMenuItem(), update] }
+        return [settingsMenuItem(), menuItems(ownsSettings: false)[0], update]
     }
 
     /// Opens what ⌘, opens: the product's own settings page, or this shared window.
@@ -174,7 +185,8 @@ final class AppLifecycleUI: NSObject {
     }
 
     @objc private func openSettings() { show() }
-    @objc private func checkUpdates() { checkForUpdates() }
+    // An offscreen self-test (activation policy .prohibited) checks without showing the window.
+    @objc private func checkUpdates() { checkForUpdates(present: NSApp.activationPolicy() != .prohibited) }
 
     func show() {
         makeWindow()
