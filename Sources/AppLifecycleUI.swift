@@ -138,9 +138,12 @@ final class AppLifecycleUI: NSObject {
             items = Self.menuItems(ownsSettings: !taken)
             if !taken { items[0].keyEquivalent = ","; items[0].keyEquivalentModifierMask = .command }
         }
-        let separator = NSMenuItem.separator()
+        // After About; one separator on each side, never two in a row next to the product's own separators.
         let index = min(1, appMenu.numberOfItems)
-        for (offset, item) in (items + [separator]).enumerated() { item.identifier = Self.menuID; appMenu.insertItem(item, at: index + offset) }
+        var block = items
+        if index < appMenu.numberOfItems, !appMenu.items[index].isSeparatorItem { block.append(.separator()) }
+        if index > 0, !appMenu.items[index - 1].isSeparatorItem { block.insert(.separator(), at: 0) }
+        for (offset, item) in block.enumerated() { item.identifier = Self.menuID; appMenu.insertItem(item, at: index + offset) }
     }
 
     private func detachMenu() {
@@ -1318,20 +1321,21 @@ final class LifecycleLanguageRow: NSObject {
 /// The 界面语言 row for a SwiftUI settings page (put it first, inside the page's own Form/Section):
 /// the same choice, note and Reopen Now as `LifecycleLanguageRow`.
 @available(macOS 11.0, *)
-struct LifecycleLanguagePicker: View {
-    @State private var choice = LifecycleLanguage.current
-    @State private var pending = LifecycleLanguage.needsRelaunch
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Picker(LifecycleText.pick("App language", "界面语言"), selection: $choice) {
-                    ForEach(LifecycleLanguage.allCases, id: \.self) { option in Text(option.title).tag(option) }
+struct LifecycleLanguagePicker: SwiftUI.View {
+    @SwiftUI.State private var choice = LifecycleLanguage.current
+    @SwiftUI.State private var pending = LifecycleLanguage.needsRelaunch
+    var body: some SwiftUI.View {
+        SwiftUI.VStack(alignment: .leading, spacing: 4) {
+            SwiftUI.HStack {
+                SwiftUI.Picker(LifecycleText.pick("App language", "界面语言"), selection: SwiftUI.Binding(get: { choice }, set: { value in
+                    choice = value; LifecycleLanguage.set(value); pending = LifecycleLanguage.needsRelaunch
+                })) {
+                    SwiftUI.ForEach(LifecycleLanguage.allCases, id: \.self) { option in SwiftUI.Text(option.title).tag(option) }
                 }
                 .accessibilityIdentifier("appLanguage")
-                .onChange(of: choice) { value in LifecycleLanguage.set(value); pending = LifecycleLanguage.needsRelaunch }
-                if pending { Button(LifecycleText.pick("Reopen Now", "立即重新打开")) { LifecycleLanguage.relaunch() } }
+                if pending { SwiftUI.Button(LifecycleText.pick("Reopen Now", "立即重新打开")) { LifecycleLanguage.relaunch() } }
             }
-            Text(pending ? LifecycleText.pick("Takes effect after the app reopens.", "重新打开 App 后生效。")
+            SwiftUI.Text(pending ? LifecycleText.pick("Takes effect after the app reopens.", "重新打开 App 后生效。")
                  : LifecycleText.pick("Menus, windows and system panels switch together.", "菜单、窗口和系统面板一起切换。"))
                 .font(.caption).foregroundColor(.secondary)
         }
