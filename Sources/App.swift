@@ -411,23 +411,42 @@ final class Coordinator: NSObject {
         StoreSettingsUI.install(product: product, configuration: configuration)
         #else
         AppLifecycleUI.shared.productGroups = { [weak product] in product?.groups() ?? [] }
-        AppLifecycleUI.shared.willShow = { [weak product] in product?.refresh() }
+        // Every way into the shared settings window — ⌘, 设置… (attached by the shared layer), the menu bar's 设置…,
+        // openSettings — passes here; offscreen snapshots (no Dock allowed) and test coordinators are not the user.
+        AppLifecycleUI.shared.willShow = { [weak self, weak product] in
+            product?.refresh()
+            if let self, !self.testing, NSApp.activationPolicy() != .prohibited { self.settingsShown() }
+        }
         AppLifecycleUI.shared.canInstallUpdate = { [weak self] in self?.panelActive != true }
         AppLifecycleUI.install(name: Env.productName, configuration: configuration, updateSource: BasicsTestMode.updateSource)
         #endif
     }
 
     func openSettings() {
-        settingsVisible = true
-        // While the window is open the product is an ordinary application with a Dock icon and a menu bar.
-        updatePresence()
-        guard !testing else { return }
-        if let front = NSWorkspace.shared.frontmostApplication, front.processIdentifier != getpid() { applicationBeforeSettings = front }
         #if APP_STORE
+        settingsShown()
+        guard !testing else { return }
         StoreSettingsUI.shared.show()
+        watchSettingsWindow()
         #else
-        AppLifecycleUI.shared.show()
+        guard !testing else { settingsVisible = true; updatePresence(); return }
+        AppLifecycleUI.openStandardSettings()   // the shared window; its willShow runs settingsShown()
         #endif
+    }
+
+    /// The settings window is about to show: remember where the user came from, and while it is open the product is an
+    /// ordinary application with a Dock icon and a menu bar.
+    private func settingsShown() {
+        if !testing, let front = NSWorkspace.shared.frontmostApplication, front.processIdentifier != getpid() { applicationBeforeSettings = front }
+        settingsVisible = true
+        updatePresence()
+        #if !APP_STORE
+        watchSettingsWindow()
+        if settingsWindow == nil { DispatchQueue.main.async { [weak self] in self?.watchSettingsWindow() } }
+        #endif
+    }
+
+    private func watchSettingsWindow() {
         if settingsWindow == nil, let window = NSApp.windows.first(where: { $0.title == "\(Env.productName) 设置" || $0.title == String(localized: "\(Env.productName) 设置") }) {
             settingsWindow = window
             NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in
@@ -488,12 +507,16 @@ enum MenuBarMenu {
         let search = NSMenuItem(title: String(localized: "搜索当前 App 的菜单"), action: #selector(AppDelegate.searchFrontApplication(_:)), keyEquivalent: "")
         // Shown as a reminder of the shortcut; it only acts while this menu is open.
         if let (key, mask) = hotkey?.menuEquivalent { search.keyEquivalent = key; search.keyEquivalentModifierMask = mask }
-        let settings = NSMenuItem(title: String(localized: "设置…"), action: #selector(AppDelegate.showSettings(_:)), keyEquivalent: ",")
         let quit = NSMenuItem(title: String(localized: "退出 \(Env.productName)"), action: #selector(AppDelegate.quit(_:)), keyEquivalent: "q")
-        for item in [search, .separator(), settings, .separator(), quit] {
-            if !item.isSeparatorItem { item.target = target }
-            menu.addItem(item)
-        }
+        for item in [search, quit] { item.target = target }
+        #if APP_STORE
+        let settings = NSMenuItem(title: String(localized: "设置…"), action: #selector(AppDelegate.showSettings(_:)), keyEquivalent: ",")
+        settings.target = target
+        #else
+        // The standard settings entry (swift-shared「标准设置入口模块」): the same 设置… (⌘,) as the app menu.
+        let settings = AppLifecycleUI.settingsMenuItem()
+        #endif
+        for item in [search, .separator(), settings, .separator(), quit] { menu.addItem(item) }
     }
 }
 
@@ -650,9 +673,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation, 
         let main = NSMenu()
         let application = NSMenu()
         application.addItem(withTitle: String(localized: "关于 \(Env.productName)"), action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        // 设置… (⌘,), 检查更新… and a separator are attached right after About by the shared layer (AppLifecycleUI).
+        #if APP_STORE
         application.addItem(.separator())
         application.addItem(withTitle: String(localized: "设置…"), action: #selector(showSettings(_:)), keyEquivalent: ",").target = self
         application.addItem(.separator())
+        #endif
         application.addItem(withTitle: String(localized: "隐藏 \(Env.productName)"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         let others = application.addItem(withTitle: String(localized: "隐藏其他"), action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
         others.keyEquivalentModifierMask = [.command, .option]

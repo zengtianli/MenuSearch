@@ -323,7 +323,7 @@ enum CLI {
         let source = BasicsTestMode.updateSource
         #endif
         var product = AppLifecycleCLI.Product(command: "menusearch", name: Env.productName,
-                                             configuration: configuration(), updateSource: source, windowEntry: "设置…")
+                                             configuration: configuration(), updateSource: source, windowEntry: AppLifecycleCLI.defaultWindowEntry)
         product.changed = { if !Env.isolated { _ = Control.request(["cmd": "reload"]) } }
         product.runningApp = { Env.isolated ? [] : (Control.request(["cmd": "status"])?["pid"] as? Int32).map { [$0] } ?? [] }
         product.canInstallUpdate = { Env.isolated || Control.request(["cmd": "status"])?["panel_visible"] as? Bool != true }
