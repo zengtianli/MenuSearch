@@ -118,16 +118,18 @@ enum SelfTest {
             checks[key] = observed && NSApp.windows.allSatisfy { !$0.isVisible } && NSApp.activationPolicy() == .prohibited
         }
         try? FileManager.default.removeItem(at: feed)
-        check("updates_ui_missing_feed_error", contains: "检查未完成")
+        check("updates_ui_missing_feed_error", contains: LifecycleText.pick("Check did not finish: ", "检查未完成："))
         try Data("{broken".utf8).write(to: feed)
-        check("updates_ui_corrupt_feed_error", contains: "检查未完成")
+        check("updates_ui_corrupt_feed_error", contains: LifecycleText.pick("Check did not finish: ", "检查未完成："))
         let release: [String: Any] = ["version": Env.version, "build": String((Int(Env.build) ?? 0) + 1),
             "bundle_id": identity, "channel": BasicsTestMode.channel, "filename": asset.lastPathComponent,
             "sha256": SHA256.hash(data: try Data(contentsOf: asset)).map { String(format: "%02x", $0) }.joined(), "installation": "bundle"]
         try JSONSerialization.data(withJSONObject: release).write(to: feed)
-        check("updates_ui_valid_feed_recovers", contains: "有新版")
+        check("updates_ui_valid_feed_recovers", contains: LifecycleText.pick("is available; you have", "有新版"))
         func hasUpgrade(_ view: NSView) -> Bool {
-            if let button = view as? NSButton, button.title == "升级到新版…", !button.isHidden, button.isEnabled { return true }
+            if let button = view as? NSButton,
+               button.title == LifecycleText.pick("Update to New Version…", "升级到新版…"),
+               !button.isHidden, button.isEnabled { return true }
             return view.subviews.contains(where: hasUpgrade)
         }
         checks["updates_ui_get_version_entry"] = NSApp.windows.contains { $0.contentView.map(hasUpgrade) ?? false }

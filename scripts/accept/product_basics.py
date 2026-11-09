@@ -62,6 +62,26 @@ def signature_valid(app):
                           capture_output=True, timeout=20).returncode == 0
 
 
+def evidence_location(spec):
+    """Chapter runs sources in a clone, but keeps evidence in the original repository."""
+    repo = Path(os.environ.get('SOP_SOURCE_REPO') or ROOT).resolve()
+    workdir = Path(os.environ.get('SOP_REPO') or ROOT).resolve()
+    out = Path(os.environ['SOP_OUT_DIR']).resolve()
+    allowed = repo / 'perf/acceptance'
+    app_id = os.environ['SOP_APP_ID']
+    if (app_id != 'menu-search' or spec['app_id'] != app_id or workdir != ROOT
+            or not allowed.resolve().is_relative_to(repo) or not out.is_relative_to(allowed)):
+        raise ValueError('This acceptance only writes MenuSearch perf/acceptance under the Chapter contract')
+    return repo, out
+
+
+def validate_candidate_paths(app, receipt):
+    # build/ may be a symlink to build.noindex; compare canonical paths on both sides.
+    if (not app.resolve().is_relative_to((ROOT / 'build').resolve())
+            or not receipt.resolve().is_relative_to((ROOT / 'build/accept').resolve())):
+        raise ValueError('Candidates and their receipts must be under this product build/ and build/accept/')
+
+
 def production_snapshot():
     # Hash only; never copy the user's preferences or menu content into acceptance output.
     prefs = subprocess.run(['defaults', 'export', PRODUCT, '-'], capture_output=True, timeout=10)
@@ -81,13 +101,11 @@ def main():
     candidate = selected_app != INSTALLED.resolve()
     # Chapter computed SOP_BUILD_CURRENT for exactly the bundle it handed over in SOP_INSTALLED_APP.
     engine_target = bool(os.environ.get('SOP_INSTALLED_APP')) and selected_app == Path(os.environ['SOP_INSTALLED_APP']).resolve()
-    if candidate and (not selected_app.is_relative_to(ROOT / 'build') or not receipt_path.is_relative_to(ROOT / 'build/accept')):
-        raise ValueError('Candidates and their receipts must be under this product build/ and build/accept/')
+    if candidate:
+        validate_candidate_paths(selected_app, receipt_path)
     spec = json.loads(os.environ['SOP_PRODUCT_BASICS_SPEC'])
     app_id = os.environ['SOP_APP_ID']
-    out = Path(os.environ['SOP_OUT_DIR']).resolve()
-    if app_id != 'menu-search' or spec['app_id'] != app_id or not out.is_relative_to(ROOT / 'perf/acceptance'):
-        raise ValueError('This acceptance only writes MenuSearch perf/acceptance under the Chapter contract')
+    evidence_root, out = evidence_location(spec)
     run = out / ('product-basics-' + uuid.uuid4().hex)
     run.mkdir(parents=True)
     checks = {key: {} for key in FEATURES}
@@ -174,7 +192,7 @@ def main():
         settings_path = Path(path_body['path']).resolve()
         if path_result.returncode or not settings_path.is_relative_to(home.resolve()):
             raise ValueError('CFFIXED_USER_HOME did not isolate the actual product settings path; refusing writes')
-        binding['private_settings_path'] = str(settings_path.relative_to(ROOT))
+        binding['private_settings_path'] = str(settings_path.relative_to(evidence_root))
         settings_path.parent.mkdir(parents=True, exist_ok=True)
 
         ui_env = {**env, 'MENUSEARCH_SUPPORT_DIR': str(run / 'ui-support'),
@@ -351,7 +369,7 @@ def main():
             and sha(selected_app / 'Contents/Info.plist') == info_sha
             and code_binding() == code and code['current']
             and source_snapshot() == source_files and signature_valid(selected_app))
-    upstream = {'path': str((ui_dir / 'self-test.json').relative_to(ROOT)),
+    upstream = {'path': str((ui_dir / 'self-test.json').relative_to(evidence_root)),
                 'sha256': sha(ui_dir / 'self-test.json')} if (ui_dir / 'self-test.json').is_file() else None
     features = {}
     scope = (('Candidate' if candidate else 'Installed') + ' download edition, copied without recompilation and re-signed only for a disposable identity; '
@@ -367,13 +385,13 @@ def main():
         write(raw_path, raw)
         features[feature] = {'result': 'passed' if all(value is True for value in checks[feature].values()) else 'failed',
                              'method': 'ui_automation' if feature == 'settings' else 'real_product',
-                             'evidence': str(raw_path.relative_to(ROOT)), 'evidence_sha256': sha(raw_path),
+                             'evidence': str(raw_path.relative_to(evidence_root)), 'evidence_sha256': sha(raw_path),
                              'checks': list(checks[feature]), 'missing': missing[feature]}
     passed = all(feature['result'] == 'passed' for feature in features.values())
     counts = {feature: f"{sum(value is True for value in checks[feature].values())}/{len(checks[feature])}" for feature in FEATURES}
     detail = {'schema_version': 1, 'app_id': app_id, 'spec_digest': spec['digest'], 'features': features,
               'summary': f"{'候选' if candidate else '当前装机'} {binding['version']} ({binding['build']})：" + '；'.join(f'{feature} {counts[feature]}' for feature in FEATURES),
-              'scope': scope, 'run': str(run.relative_to(ROOT))}
+              'scope': scope, 'run': str(run.relative_to(evidence_root))}
     write(out / 'product_basics.detail.json', detail)
     print(detail['summary'], flush=True)
     if error:

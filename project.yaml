@@ -102,7 +102,7 @@ sop:
     languages: [en, zh-Hans]
     development: en
     shots:
-      command: ["sh", "-c", "MENUSEARCH_L10N_APP=build/quick/MenuSearch.app \"$HOME/Dev/.venv/bin/python\" -m pytest scripts/accept/test_l10n.py -q -p no:cacheprovider"]
+      command: ["sh", "-c", "MENUSEARCH_L10N_APP=build/quick/MenuSearch.app \"$HOME/Dev/.venv/bin/python\" -m pytest scripts/accept/test_l10n.py -q -n auto -p no:cacheprovider"]
       allow_chinese: ["菜单搜索", "写笔记", "文件"]
   source:
   - Sources/**
