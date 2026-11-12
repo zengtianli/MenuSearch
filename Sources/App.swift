@@ -510,7 +510,7 @@ enum MenuBarMenu {
         let quit = NSMenuItem(title: String(localized: "退出 \(Env.productName)"), action: #selector(AppDelegate.quit(_:)), keyEquivalent: "q")
         for item in [search, quit] { item.target = target }
         #if APP_STORE
-        let settings = NSMenuItem(title: String(localized: "设置…"), action: #selector(AppDelegate.showSettings(_:)), keyEquivalent: ",")
+        let settings = StoreSettingsEntry.menuItem(target: target ?? NSApplication.shared, action: #selector(AppDelegate.showSettings(_:)))
         settings.target = target
         #else
         // The standard settings entry (swift-shared「标准设置入口模块」): the same 设置… (⌘,) as the app menu.
@@ -676,7 +676,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation, 
         // 设置… (⌘,), 检查更新… and a separator are attached right after About by the shared layer (AppLifecycleUI).
         #if APP_STORE
         application.addItem(.separator())
-        application.addItem(withTitle: String(localized: "设置…"), action: #selector(showSettings(_:)), keyEquivalent: ",").target = self
+        application.addItem(StoreSettingsEntry.menuItem(target: self, action: #selector(showSettings(_:))))
         application.addItem(.separator())
         #endif
         application.addItem(withTitle: String(localized: "隐藏 \(Env.productName)"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
